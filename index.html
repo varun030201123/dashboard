@@ -1,53 +1,53 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Building Water Dashboard Portal</title>
-    <!-- Universally Supported Embedded Style Engine -->
+    <title>Building Water Dashboard</title>
+    <!-- Built-in Cloud Connection Engine -->
+    <script src="https://unpkg.com"></script>
     <style>
-        body { background-color: #0b0f19; color: #f1f5f9; font-family: sans-serif; margin: 0; padding: 15px; display: flex; flex-direction: column; align-items: center; min-h: 100vh; justify-content: space-between; box-sizing: border-box; }
-        .container { max-width: 800px; width: 100%; display: flex; flex-direction: column; gap: 20px; }
-        header { text-align: center; border-bottom: 1px solid #1e293b; padding-bottom: 15px; margin-bottom: 10px; }
-        h1 { color: #22d3ee; text-transform: uppercase; letter-spacing: 2px; margin: 0; font-size: 22px; }
-        .window-wrapper { background-color: #111827; border: 1px solid #1e293b; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); height: 500px; width: 100%; position: relative; }
-        iframe { width: 100%; height: 100%; border: none; background-color: #111827; }
-        .plug-card { background-color: #111827; border: 1px solid #1e293b; border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 15px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); }
-        .plug-title { font-size: 16px; font-weight: bold; margin: 0; color: #f1f5f9; }
-        .plug-id { font-size: 11px; color: #64748b; margin: 4px 0 0 0; }
-        button { width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: bold; text-transform: uppercase; font-size: 12px; letter-spacing: 1px; cursor: pointer; background-color: #2563eb; color: white; transition: background 0.2s; }
-        button:hover { background-color: #1d4ed8; }
-        @media(min-width: 640px) { .plug-card { flex-direction: row; align-items: center; justify-content: space-between; } button { width: auto; padding: 14px 40px; } }
+        body { background-color: #0b0f19; color: #f1f5f9; font-family: sans-serif; text-align: center; padding: 20px; }
+        .card { background-color: #111827; border: 1px solid #1e293b; border-radius: 16px; padding: 20px; margin: 15px auto; max-width: 300px; }
+        .percentage { font-size: 40px; font-weight: bold; color: #22d3ee; margin: 10px 0; }
+        button { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; text-transform: uppercase; cursor: pointer; background-color: #2563eb; color: white; }
     </style>
 </head>
 <body>
+    <h1>Building Water Dashboard</h1>
+    <p id="status" style="color: #eab308;">Connecting to cloud stream...</p>
 
-    <div class="container">
-        <!-- Dashboard Header Title -->
-        <header>
-            <h1>Building Water Dashboard</h1>
-            <p style="color: #64748b; font-size: 11px; margin: 5px 0 0 0;">Shared Infrastructure Portal • Local Wi-Fi Live Feed</p>
-        </header>
+    <div class="card">
+        <p>HITACHI TANK</p>
+        <div id="hitachi-pct" class="percentage">0%</div>
+        <button onclick="sendPulse('hitachi')">Pulse Hitachi</button>
+    </div>
 
-        <!-- Live Pass-Through Window Mirroring Your Original ESP32 Interface -->
-        <div class="window-wrapper">
-            <iframe src="http://192.168.1.198" allow="fullscreen"></iframe>
-        </div>
-
-        <!-- Unified Zebronics Smart Plug Toggle Trigger Card -->
-        <div class="plug-card">
-            <div>
-                <h3 class="plug-title">Main Zebronics Smart Plug</h3>
-                <p class="plug-id">Hardware Node ID: d7210d68a7251db57e6vrz</p>
-            </div>
-            <button onclick="toggleZebronicsPlug()">Toggle Smart Plug</button>
-        </div>
+    <div class="card">
+        <p>KAVERI TANK</p>
+        <div id="kaveri-pct" class="percentage">0%</div>
+        <button style="background-color:#dc2626;" onclick="sendPulse('kaveri')">Pulse Kaveri</button>
     </div>
 
     <script>
-        function toggleZebronicsPlug() {
-            // This button trigger will be linked to your cloud IFTTT webhook link later
-            alert("Zebronics switch clicked! Cloud routing hook is ready.");
+        // Connecting to the secure cloud stream
+        const client = mqtt.connect("wss://broker.emqx.io:8084/mqtt");
+        
+        client.on('connect', () => { 
+            document.getElementById('status').innerText = "Global Cloud Connected!";
+            document.getElementById('status').style.color = "#10b981";
+            client.subscribe("varun/water/data"); 
+        });
+
+        client.on('message', (topic, message) => {
+            const data = JSON.parse(message.toString());
+            if(data.hitachi !== undefined) document.getElementById('hitachi-pct').innerText = data.hitachi + "%";
+            if(data.kaveri !== undefined) document.getElementById('kaveri-pct').innerText = data.kaveri + "%";
+        });
+
+        function sendPulse(motorName) {
+            client.publish("varun/water/commands", motorName);
+            alert("Pulse signal sent to " + motorName);
         }
     </script>
 </body>
