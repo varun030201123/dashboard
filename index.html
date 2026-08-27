@@ -21,6 +21,10 @@
             <div class="w-full bg-slate-950 rounded-full h-8 overflow-hidden relative border border-slate-800 mt-2">
                 <div id="hitachi-bar" class="bg-blue-600 h-full transition-all duration-1000 ease-in-out" style="width: 0%;"></div>
             </div>
+            <!-- Pulse Button -->
+            <button onclick="sendPulse('hitachi')" class="w-full mt-4 py-2.5 bg-blue-500 hover:bg-blue-600 active:scale-95 transition-all text-white font-bold rounded-md uppercase tracking-wider text-xs cursor-pointer">
+                Pulse Hitachi Motor
+            </button>
         </div>
 
         <!-- KAVERI TANK -->
@@ -30,6 +34,10 @@
             <div class="w-full bg-slate-950 rounded-full h-8 overflow-hidden relative border border-slate-800 mt-2">
                 <div id="kaveri-bar" class="bg-blue-600 h-full transition-all duration-1000 ease-in-out" style="width: 0%;"></div>
             </div>
+            <!-- Pulse Button -->
+            <button onclick="sendPulse('kaveri')" class="w-full mt-4 py-2.5 bg-red-500 hover:bg-red-600 active:scale-95 transition-all text-white font-bold rounded-md uppercase tracking-wider text-xs cursor-pointer">
+                Pulse Kaveri Motor
+            </button>
         </div>
 
         <!-- UNDERGROUND SUMP -->
@@ -56,8 +64,12 @@
     <script>
         const client = mqtt.connect("wss://://hivemq.com");
         const TOPIC_WATER = "varunshouse789/water/data";
+        const TOPIC_COMMANDS = "varunshouse789/water/commands";
 
-        client.on('connect', () => { client.subscribe(TOPIC_WATER); });
+        client.on('connect', () => { 
+            client.subscribe(TOPIC_WATER); 
+        });
+
         client.on('message', (topic, message) => {
             if (topic === TOPIC_WATER) {
                 try {
@@ -77,6 +89,12 @@
                 } catch(e) { console.log("JSON error"); }
             }
         });
+
+        // Sends a single quick command text back to the house ESP32 gateway
+        function sendPulse(motorName) {
+            client.publish(TOPIC_COMMANDS, motorName);
+            alert("Sent quick pulse single trigger to " + motorName + " motor!");
+        }
 
         function toggleZebronicsPlug() {
             alert("Zebronics command button clicked!");
