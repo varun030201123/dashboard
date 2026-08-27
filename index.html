@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Building Water Dashboard</title>
-    <!-- Universally Supported Cloud Streaming Libraries -->
+    <!-- Built-in Cloud Connection Engine -->
     <script src="https://unpkg.com"></script>
     <style>
         body { background-color: #0b0f19; color: #f1f5f9; font-family: sans-serif; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
@@ -20,17 +20,20 @@
         .btn-red { background-color: #dc2626; }
         .sump-text { color: #34d399; }
         .sump-bar { background: linear-gradient(to right, #059669, #34d399); }
-        .btn-status { background-color: #1e293b; color: #64748b; cursor: default; }
+        .plug-card { background-color: #111827; border: 1px solid #1e293b; border-radius: 16px; padding: 25px; display: flex; flex-direction: column; gap: 15px; margin-top: 25px; }
+        .plug-title { font-size: 18px; font-weight: bold; margin: 0; text-align: left; }
+        @media(min-width: 640px) { .plug-card { flex-direction: row; align-items: center; justify-content: space-between; } .btn-toggle { width: auto; padding: 15px 40px; margin-top: 0; } }
     </style>
 </head>
 <body>
     <div class="container">
+        <!-- Header -->
         <header>
             <h1>Building Water Dashboard</h1>
-            <p id="state" style="color: #eab308; font-size: 11px; margin: 5px 0 0 0;">Connecting Global Stream...</p>
+            <p id="state" style="color: #eab308; font-size: 11px; margin: 5px 0 0 0;">Connecting Global Secure Tunnel...</p>
         </header>
 
-        <!-- HITACHI OVERHEAD TANK -->
+        <!-- HITACHI TANK -->
         <div class="card">
             <p class="title">Hitachi Tank</p>
             <div id="h-pct" class="pct">0%</div>
@@ -38,7 +41,7 @@
             <button onclick="pulse('hitachi')">Pulse Hitachi Motor</button>
         </div>
 
-        <!-- KAVERI OVERHEAD TANK -->
+        <!-- KAVERI TANK -->
         <div class="card">
             <p class="title">Kaveri Tank</p>
             <div id="k-pct" class="pct">0%</div>
@@ -51,30 +54,47 @@
             <p class="title">Underground Sump</p>
             <div id="s-pct" class="pct sump-text">0%</div>
             <div class="bar-bg"><div id="s-bar" class="bar sump-bar"></div></div>
-            <button class="btn-status">Monitoring Only</button>
+            <button style="background-color: #1e293b; color: #64748b; cursor: default;">Monitoring Only</button>
+        </div>
+
+        <!-- ZEBRONICS CONTROL CARD -->
+        <div class="plug-card">
+            <div style="text-align: left;">
+                <h3 class="plug-title">Main Zebronics Smart Plug</h3>
+                <p style="font-size: 11px; color: #64748b; margin: 4px 0 0 0;">Hardware Node ID: d7210d68a7251db57e6vrz</p>
+            </div>
+            <button onclick="toggleZebronicsPlug()" class="btn-blue btn-toggle">Toggle Smart Plug</button>
         </div>
     </div>
 
     <script>
-        // Automatic secure cloud receiver connection engine
+        // High-Uptime Secure WebSocket Port Connection Path
         const client = mqtt.connect("wss://://hivemq.com");
         
         client.on('connect', () => { 
-            document.getElementById('state').innerText = "Live Global Connection Active";
+            document.getElementById('state').innerText = "Live Secure Tunnel Tunneling Active";
             document.getElementById('state').style.color = "#10b981";
-            client.subscribe("varunshouse789/data"); 
+            client.subscribe("varunsbuildingwater789/data"); 
         });
 
         client.on('message', (topic, msg) => {
-            const data = JSON.parse(msg.toString());
-            if(data.h !== undefined) { document.getElementById('h-pct').innerText = data.h + "%"; document.getElementById('h-bar').style.width = data.h + "%"; }
-            if(data.k !== undefined) { document.getElementById('k-pct').innerText = data.k + "%"; document.getElementById('k-bar').style.width = data.k + "%"; }
-            if(data.s !== undefined) { document.getElementById('s-pct').innerText = data.s + "%"; document.getElementById('s-bar').style.width = data.s + "%"; }
+            try {
+                const data = JSON.parse(msg.toString());
+                if(data.h !== undefined) { document.getElementById('h-pct').innerText = data.h + "%"; document.getElementById('h-bar').style.width = data.h + "%"; }
+                if(data.k !== undefined) { document.getElementById('k-pct').innerText = data.k + "%"; document.getElementById('k-bar').style.width = data.k + "%"; }
+                if(data.s !== undefined) { document.getElementById('s-pct').innerText = data.s + "%"; document.getElementById('s-bar').style.width = data.s + "%"; }
+            } catch(e) {}
         });
 
         function pulse(motor) {
-            client.publish("varunshouse789/cmds", motor);
-            alert("Sent quick pulse trigger command to " + motor);
+            client.publish("varunsbuildingwater789/cmds", motor);
+            alert("Sent quick pulse trigger signal to physical " + motor + " relay!");
+        }
+
+        function toggleZebronicsPlug() {
+            // Put your custom private IFTTT cloud automation webhook link right here:
+            fetch('https://ifttt.com')
+            .then(res => { alert("Zebronics switch click command sent to cloud."); });
         }
     </script>
 </body>
