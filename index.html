@@ -55,12 +55,12 @@
     </div>
 
     <script>
-        const fbURL = "https://firebaseio.com";
+        // Points directly to the clean dataset matching your hardware output configuration
+        const fbTargetURL = "https://firebaseio.com";
 
-        // Downloads the exact dataset cleanly, parsing items instantly in your browser
-        async function updateDashboardData() {
+        async function fetchWaterData() {
             try {
-                const response = await fetch(fbURL);
+                const response = await fetch(fbTargetURL);
                 const data = await response.json();
                 if (data) {
                     if (data.hitachi !== undefined) {
@@ -76,7 +76,7 @@
                         document.getElementById('s-bar').style.width = data.sump + "%";
                     }
                 }
-            } catch (error) { console.log("Database offline."); }
+            } catch (error) { console.log("Database update fetch fail."); }
         }
 
         async function sendCloudPulse(motorName) {
@@ -89,8 +89,8 @@
             } catch (err) { alert("Network issue transmitting pulse."); }
         }
 
-        setInterval(updateDashboardData, 3000);
-        updateDashboardData();
+        setInterval(fetchWaterData, 3000);
+        fetchWaterData();
     </script>
 </body>
 </html>
