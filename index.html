@@ -4,77 +4,205 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Building Water Dashboard</title>
-    <!-- Universally Supported Styling & Cloud Engines -->
-    <script src="https://tailwindcss.com"></script>
+    <!-- Built-in Cloud Connection Engine -->
     <script src="https://unpkg.com"></script>
+    <style>
+        /* Pure CSS Styling Layout - 100% Reliable */
+        body {
+            background-color: #0b0f19;
+            color: #f1f5f9;
+            font-family: sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            max-width: 800px;
+            width: 100%;
+        }
+        header {
+            text-align: center;
+            border-b: 1px solid #1e293b;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        h1 {
+            color: #22d3ee;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin: 0;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .card {
+            background-color: #111827;
+            border: 1px solid #1e293b;
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+        }
+        .tank-title {
+            text-transform: uppercase;
+            color: #94a3b8;
+            font-size: 12px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            margin: 0 0 10px 0;
+        }
+        .percentage {
+            font-size: 36px;
+            font-weight: 800;
+            color: #22d3ee;
+            margin: 10px 0;
+        }
+        .progress-bg {
+            background-color: #020617;
+            border: 1px solid #1e293b;
+            border-radius: 8px;
+            height: 20px;
+            padding: 2px;
+            margin-bottom: 15px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            background: linear-gradient(to right, #2563eb, #22d3ee);
+            height: 100%;
+            border-radius: 6px;
+            width: 0%;
+            transition: width 1s ease-in-out;
+        }
+        .sump-bar {
+            background: linear-gradient(to right, #059669, #34d399);
+        }
+        .sump-text {
+            color: #34d399;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-blue { background-color: #2563eb; color: white; }
+        .btn-blue:hover { background-color: #1d4ed8; }
+        .btn-red { background-color: #dc2626; color: white; }
+        .btn-red:hover { background-color: #b91c1c; }
+        .btn-status {
+            background-color: #1e293b;
+            color: #64748b;
+            cursor: default;
+        }
+        .plug-card {
+            background-color: #111827;
+            border: 1px solid #1e293b;
+            border-radius: 16px;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .plug-info {
+            flex: 1;
+        }
+        .plug-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin: 0;
+        }
+        .plug-id {
+            font-size: 11px;
+            color: #64748b;
+            margin: 4px 0 0 0;
+        }
+        .state-box {
+            display: inline-block;
+            margin-top: 8px;
+            font-size: 12px;
+            font-weight: bold;
+            padding: 3px 10px;
+            border-radius: 6px;
+            background-color: #020617;
+            border: 1px solid #1e293b;
+            color: #94a3b8;
+        }
+        .state-on { color: #34d399; border-color: rgba(52,211,153,0.3); background-color: rgba(52,211,153,0.1); }
+        .state-off { color: #f87171; border-color: rgba(248,113,113,0.3); background-color: rgba(248,113,113,0.1); }
+        @media(min-width: 640px) {
+            .plug-card { flex-direction: row; align-items: center; justify-content: space-between; }
+            .btn-toggle { width: auto; padding: 15px 40px; }
+        }
+    </style>
 </head>
-<body class="bg-[#0b0f19] text-[#f1f5f9] min-h-screen p-4 md:p-8 flex flex-col justify-between">
+<body>
 
-    <div class="max-w-4xl mx-auto w-full space-y-6">
+    <div class="container">
         <!-- Header -->
-        <header class="text-center md:text-left border-b border-slate-800 pb-4 flex flex-col md:flex-row justify-between items-center gap-2">
-            <div>
-                <h1 class="text-2xl font-extrabold text-cyan-400 uppercase">Building Water Dashboard</h1>
-                <p class="text-slate-400 text-xs mt-1">Portal Shared Infrastructure • Live Monitoring</p>
-            </div>
-            <div class="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full">
-                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                <span class="text-[10px] uppercase font-bold text-emerald-400">Cloud Active</span>
-            </div>
+        <header>
+            <h1>Building Water Dashboard</h1>
+            <p style="color: #64748b; font-size: 12px; margin: 5px 0 0 0;">Shared Infrastructure Portal • Global Cloud Live</p>
         </header>
 
         <!-- Tanks Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="grid">
             <!-- HITACHI -->
-            <div class="bg-[#111827] p-6 rounded-2xl border border-slate-800 shadow-2xl flex flex-col justify-between space-y-4">
-                <div class="text-center space-y-1">
-                    <p class="text-[11px] uppercase text-slate-400 font-bold tracking-widest">Hitachi Tank</p>
-                    <h2 id="hitachi-pct" class="text-4xl font-extrabold text-cyan-400">0%</h2>
+            <div class="card">
+                <p class="tank-title">Hitachi Tank</p>
+                <div id="hitachi-pct" class="percentage">0%</div>
+                <div class="progress-bg">
+                    <div id="hitachi-bar" class="progress-bar"></div>
                 </div>
-                <div class="w-full bg-slate-950 rounded-xl h-6 p-1 border border-slate-800">
-                    <div id="hitachi-bar" class="bg-gradient-to-r from-blue-600 to-cyan-400 h-full rounded-lg transition-all duration-1000" style="width: 0%;"></div>
-                </div>
-                <button onclick="sendPulse('hitachi')" class="w-full py-3 bg-blue-600 hover:bg-blue-500 active:scale-95 text-white font-bold rounded-xl text-xs uppercase cursor-pointer">Pulse Motor</button>
+                <button onclick="sendPulse('hitachi')" class="btn-blue">Pulse Motor</button>
             </div>
+
             <!-- KAVERI -->
-            <div class="bg-[#111827] p-6 rounded-2xl border border-slate-800 shadow-2xl flex flex-col justify-between space-y-4">
-                <div class="text-center space-y-1">
-                    <p class="text-[11px] uppercase text-slate-400 font-bold tracking-widest">Kaveri Tank</p>
-                    <h2 id="kaveri-pct" class="text-4xl font-extrabold text-cyan-400">0%</h2>
+            <div class="card">
+                <p class="tank-title">Kaveri Tank</p>
+                <div id="kaveri-pct" class="percentage">0%</div>
+                <div class="progress-bg">
+                    <div id="kaveri-bar" class="progress-bar"></div>
                 </div>
-                <div class="w-full bg-slate-950 rounded-xl h-6 p-1 border border-slate-800">
-                    <div id="kaveri-bar" class="bg-gradient-to-r from-blue-600 to-cyan-400 h-full rounded-lg transition-all duration-1000" style="width: 0%;"></div>
-                </div>
-                <button onclick="sendPulse('kaveri')" class="w-full py-3 bg-red-600 hover:bg-red-500 active:scale-95 text-white font-bold rounded-xl text-xs uppercase cursor-pointer">Pulse Motor</button>
+                <button onclick="sendPulse('kaveri')" class="btn-red">Pulse Motor</button>
             </div>
+
             <!-- SUMP -->
-            <div class="bg-[#111827] p-6 rounded-2xl border border-slate-800 shadow-2xl flex flex-col justify-between space-y-4">
-                <div class="text-center space-y-1">
-                    <p class="text-[11px] uppercase text-slate-400 font-bold tracking-widest">Underground Sump</p>
-                    <h2 id="sump-pct" class="text-4xl font-extrabold text-emerald-400">0%</h2>
+            <div class="card">
+                <p class="tank-title">Underground Sump</p>
+                <div id="sump-pct" class="percentage sump-text">0%</div>
+                <div class="progress-bg">
+                    <div id="sump-bar" class="progress-bar sump-bar"></div>
                 </div>
-                <div class="w-full bg-slate-950 rounded-xl h-6 p-1 border border-slate-800">
-                    <div id="sump-bar" class="bg-gradient-to-r from-emerald-600 to-teal-400 h-full rounded-lg transition-all duration-1000" style="width: 0%;"></div>
-                </div>
-                <div class="py-2.5 text-center bg-slate-900/40 text-slate-500 text-[10px] uppercase font-bold border border-slate-800/40 rounded-xl">Monitoring Only</div>
+                <button class="btn-status">Monitoring Only</button>
             </div>
         </div>
 
-        <!-- ZEBRONICS SMART PLUG -->
-        <div class="bg-[#111827] p-6 rounded-2xl border border-slate-800 shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-6 mt-6">
-            <div class="space-y-1 text-center sm:text-left">
-                <h3 class="text-lg font-bold text-slate-100">Main Zebronics Smart Plug</h3>
-                <p class="text-[11px] text-slate-500">ID: d7210d68a7251db57e6vrz</p>
-                <div class="flex items-center justify-center sm:justify-start gap-2 mt-2">
-                    <span class="text-xs font-semibold text-slate-400">Plug State:</span>
-                    <span id="plug-status" class="text-xs font-extrabold bg-slate-900 px-2.5 py-0.5 rounded-md border border-slate-800 text-slate-400">Loading...</span>
+        <!-- ZEBRONICS CONTROL -->
+        <div class="plug-card">
+            <div class="plug-info">
+                <h3 class="plug-title">Main Zebronics Smart Plug</h3>
+                <p class="plug-id">Hardware Node ID: d7210d68a7251db57e6vrz</p>
+                <div>
+                    <span id="plug-status" class="state-box">Loading...</span>
                 </div>
             </div>
-            <button onclick="toggleZebronicsPlug()" class="w-full sm:w-auto px-8 py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-extrabold rounded-xl uppercase text-xs cursor-pointer">Toggle Smart Plug</button>
+            <button onclick="toggleZebronicsPlug()" class="btn-blue btn-toggle">Toggle Smart Plug</button>
         </div>
     </div>
 
     <script>
+        // Connecting to cloud broker stream
         const client = mqtt.connect("wss://://hivemq.com");
         const TOPIC_WATER = "varunshouse789/water/data";
         const TOPIC_COMMANDS = "varunshouse789/water/commands";
@@ -87,6 +215,7 @@
 
         client.on('message', (topic, message) => {
             const payload = message.toString();
+
             if (topic === TOPIC_WATER) {
                 try {
                     const data = JSON.parse(payload);
@@ -104,14 +233,18 @@
                     }
                 } catch(e) {}
             }
+            
             if (topic === TOPIC_PLUG_STATUS) {
-                const el = document.getElementById('plug-status');
-                el.innerText = payload.toUpperCase();
-                el.className = payload.toUpperCase() === "ON" ? "text-xs font-extrabold bg-emerald-500/10 px-2.5 py-0.5 rounded-md border border-emerald-500/30 text-emerald-400" : "text-xs font-extrabold bg-rose-500/10 px-2.5 py-0.5 rounded-md border border-rose-500/30 text-rose-400";
+                const statusElement = document.getElementById('plug-status');
+                statusElement.innerText = payload.toUpperCase();
+                if (payload.toUpperCase() === "ON") {
+                    statusElement.className = "state-box state-on";
+                } else {
+                    statusElement.className = "state-box state-off";
+                }
             }
         });
 
-        // Trigger pulse command
         function sendPulse(motorName) {
             client.publish(TOPIC_COMMANDS, motorName);
             alert("Sent quick pulse trigger to " + motorName + " motor!");
