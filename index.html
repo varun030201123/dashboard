@@ -1,63 +1,96 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Building Water Dashboard</title>
     <style>
-        body { background-color: #0b0f19; color: #f1f5f9; font-family: sans-serif; text-align: center; padding: 20px; }
-        .card { background-color: #111827; border: 1px solid #1e293b; border-radius: 16px; padding: 20px; margin: 15px auto; max-width: 300px; }
-        .percentage { font-size: 40px; font-weight: bold; color: #22d3ee; margin: 10px 0; }
-        button { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; text-transform: uppercase; cursor: pointer; background-color: #2563eb; color: white; }
+        body { background-color: #0b0f19; color: #f1f5f9; font-family: sans-serif; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .container { max-width: 600px; width: 100%; }
+        header { text-align: center; border-bottom: 1px solid #1e293b; padding-bottom: 20px; margin-bottom: 30px; }
+        h1 { color: #22d3ee; text-transform: uppercase; letter-spacing: 2px; margin: 0; font-size: 24px; }
+        .card { background-color: #111827; border: 1px solid #1e293b; border-radius: 16px; padding: 20px; text-align: center; margin-bottom: 20px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); }
+        .title { text-transform: uppercase; color: #94a3b8; font-size: 11px; font-weight: bold; margin: 0 0 5px 0; letter-spacing: 1px; }
+        .pct { font-size: 42px; font-weight: 800; color: #22d3ee; margin: 10px 0; }
+        .bar-bg { background-color: #020617; border: 1px solid #1e293b; border-radius: 6px; height: 16px; padding: 2px; overflow: hidden; }
+        .bar { background: linear-gradient(to right, #2563eb, #22d3ee); height: 100%; border-radius: 4px; width: 0%; transition: width 0.8s ease-in-out; }
+        button { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; text-transform: uppercase; font-size: 11px; cursor: pointer; margin-top: 15px; background-color: #2563eb; color: white; transition: background 0.2s; }
+        .btn-red { background-color: #dc2626; }
+        .sump-text { color: #34d399; }
+        .sump-bar { background: linear-gradient(to right, #059669, #34d399); }
     </style>
 </head>
 <body>
-    <h1>Building Water Dashboard</h1>
-    <p style="color: #10b981;">Firebase Global Routing Active</p>
 
-    <div class="card">
-        <p>HITACHI TANK</p>
-        <div id="h" class="percentage">Loading...</div>
-        <button onclick="sendCmd('hitachi')">Pulse Hitachi</button>
-    </div>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <h1>Building Water Dashboard</h1>
+            <p style="color: #10b981; font-size: 11px; margin: 5px 0 0 0; font-weight: bold;">Google Firebase Pipeline Active</p>
+        </header>
 
-    <div class="card">
-        <p>KAVERI TANK</p>
-        <div id="k" class="percentage">Loading...</div>
-        <button style="background-color:#dc2626;" onclick="sendCmd('kaveri')">Pulse Kaveri</button>
-    </div>
+        <!-- HITACHI TANK -->
+        <div class="card">
+            <p class="title">Hitachi Tank</p>
+            <div id="h-pct" class="pct">0%</div>
+            <div class="bar-bg"><div id="h-bar" class="bar"></div></div>
+            <button onclick="sendCloudPulse('hitachi')">Pulse Hitachi Motor</button>
+        </div>
 
-    <div class="card">
-        <p>UNDERGROUND SUMP</p>
-        <div id="s" class="percentage" style="color:#34d399;">Loading...</div>
+        <!-- KAVERI TANK -->
+        <div class="card">
+            <p class="title">Kaveri Tank</p>
+            <div id="k-pct" class="pct">0%</div>
+            <div class="bar-bg"><div id="k-bar" class="bar"></div></div>
+            <button onclick="sendCloudPulse('kaveri')" class="btn-red">Pulse Kaveri Motor</button>
+        </div>
+
+        <!-- UNDERGROUND SUMP -->
+        <div class="card">
+            <p class="title">Underground Sump</p>
+            <div id="s-pct" class="pct sump-text">0%</div>
+            <div class="bar-bg"><div id="s-bar" class="bar sump-bar"></div></div>
+            <button style="background-color: #1e293b; color: #64748b; cursor: default;">Monitoring Only</button>
+        </div>
     </div>
 
     <script>
-        // REPLACE WITH YOUR REAL FIREBASE DATABASE LINK URL FROM STEP 1
-        const firebaseURL = "https://console.firebase.google.com/u/0/project/water-level-indicator-f6a44/database/water-level-indicator-f6a44-default-rtdb/data/~2F";
+        const fbURL = "https://firebaseio.com";
 
-        async function fetchLiveLevels() {
+        // Downloads the exact dataset cleanly, parsing items instantly in your browser
+        async function updateDashboardData() {
             try {
-                const response = await fetch(firebaseURL);
+                const response = await fetch(fbURL);
                 const data = await response.json();
-                if(data) {
-                    if(data.hitachi !== undefined) document.getElementById('h').innerText = data.hitachi + "%";
-                    if(data.kaveri !== undefined) document.getElementById('k').innerText = data.kaveri + "%";
-                    if(data.sump !== undefined) document.getElementById('s').innerText = data.sump + "%";
+                if (data) {
+                    if (data.hitachi !== undefined) {
+                        document.getElementById('h-pct').innerText = data.hitachi + "%";
+                        document.getElementById('h-bar').style.width = data.hitachi + "%";
+                    }
+                    if (data.kaveri !== undefined) {
+                        document.getElementById('k-pct').innerText = data.kaveri + "%";
+                        document.getElementById('k-bar').style.width = data.kaveri + "%";
+                    }
+                    if (data.sump !== undefined) {
+                        document.getElementById('s-pct').innerText = data.sump + "%";
+                        document.getElementById('s-bar').style.width = data.sump + "%";
+                    }
                 }
-            } catch (e) {}
-        }
-        
-        async function sendCmd(motorName) {
-            await fetch("https://firebaseio.com", {
-                method: "PUT",
-                body: JSON.stringify(motorName)
-            });
-            alert("Sent pulse command trigger to " + motorName);
+            } catch (error) { console.log("Database offline."); }
         }
 
-        setInterval(fetchLiveLevels, 3000);
-        fetchLiveLevels();
+        async function sendCloudPulse(motorName) {
+            try {
+                await fetch("https://firebaseio.com", {
+                    method: "PUT",
+                    body: JSON.stringify(motorName)
+                });
+                alert("Sent quick pulse trigger signal to physical " + motorName + " relay!");
+            } catch (err) { alert("Network issue transmitting pulse."); }
+        }
+
+        setInterval(updateDashboardData, 3000);
+        updateDashboardData();
     </script>
 </body>
 </html>
