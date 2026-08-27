@@ -20,40 +20,81 @@
 </head>
 <body>
     <div class="container">
+        <!-- Header -->
         <header>
             <h1>Building Water Dashboard</h1>
-            <p style="color: #64748b; font-size: 12px; margin: 5px 0 0 0;">Local Wi-Fi Live Stream Monitor</p>
+            <p id="sync-status" style="color: #eab308; font-size: 12px; margin: 5px 0 0 0;">Connecting to local monitor...</p>
         </header>
 
+        <!-- Tanks Grid -->
         <div class="grid">
+            <!-- HITACHI -->
             <div class="card">
                 <p class="tank-title">Hitachi Tank</p>
-                <div id="hitachi-pct" class="percentage">75%</div>
-                <div class="progress-bg"><div style="width: 75%;" class="progress-bar"></div></div>
+                <div id="hitachi-pct" class="percentage">Loading...</div>
+                <div class="progress-bg"><div id="hitachi-bar" style="width: 0%;" class="progress-bar"></div></div>
                 <button onclick="triggerMotor('hitachi')">Pulse Hitachi</button>
             </div>
+            <!-- KAVERI -->
             <div class="card">
                 <p class="tank-title">Kaveri Tank</p>
-                <div id="kaveri-pct" class="percentage">90%</div>
-                <div class="progress-bg"><div style="width: 90%;" class="progress-bar"></div></div>
+                <div id="kaveri-pct" class="percentage">Loading...</div>
+                <div class="progress-bg"><div id="kaveri-bar" style="width: 0%;" class="progress-bar"></div></div>
                 <button style="background-color: #dc2626;" onclick="triggerMotor('kaveri')">Pulse Kaveri</button>
             </div>
+            <!-- SUMP -->
             <div class="card">
                 <p class="tank-title">Underground Sump</p>
-                <div id="sump-pct" class="percentage" style="color:#34d399;">45%</div>
-                <div class="progress-bg"><div style="width: 45%; background: linear-gradient(to right, #059669, #34d399);" class="progress-bar"></div></div>
+                <div id="sump-pct" class="percentage" style="color:#34d399;">Loading...</div>
+                <div class="progress-bg"><div id="sump-bar" style="width: 0%; background: linear-gradient(to right, #059669, #34d399);" class="progress-bar"></div></div>
                 <button style="background-color: #1e293b; color: #64748b; cursor: default;">Monitor Only</button>
             </div>
         </div>
     </div>
 
     <script>
-        function triggerMotor(name) {
-            // Shoots a pulse request directly to your monitor IP address
-            fetch('http://192.168.1' + name)
-            .then(() => { alert("Sent quick single pulse to " + name + " motor!"); })
-            .catch(() => { alert("Pulse signal sent."); });
+        const monitorIp = "http://192.168.1.198";
+
+        // This function runs automatically every 3 seconds to fetch real values
+        async function fetchLiveLevels() {
+            try {
+                // Adjust this path if your monitor serves data on an endpoint like /api/data
+                const response = await fetch(monitorIp + "/api/getlevels"); 
+                const data = await response.json();
+                
+                // Update Hitachi Tank GUI
+                if(data.hitachi !== undefined) {
+                    document.getElementById('hitachi-pct').innerText = data.hitachi + "%";
+                    document.getElementById('hitachi-bar').style.width = data.hitachi + "%";
+                }
+                // Update Kaveri Tank GUI
+                if(data.kaveri !== undefined) {
+                    document.getElementById('kaveri-pct').innerText = data.kaveri + "%";
+                    document.getElementById('kaveri-bar').style.width = data.kaveri + "%";
+                }
+                // Update Sump GUI
+                if(data.sump !== undefined) {
+                    document.getElementById('sump-pct').innerText = data.sump + "%";
+                    document.getElementById('sump-bar').style.width = data.sump + "%";
+                }
+
+                document.getElementById('sync-status').innerText = "Local Wi-Fi Live Stream Active";
+                document.getElementById('sync-status').style.color = "#10b981";
+            } catch (error) {
+                document.getElementById('sync-status').innerText = "Offline: Connect to Home Wi-Fi";
+                document.getElementById('sync-status').style.color = "#ef4444";
+            }
         }
+
+        function triggerMotor(name) {
+            fetch(monitorIp + '/' + name)
+            .then(() => { alert("Pulse signal sent to physical " + name + " motor successfully!"); })
+            .catch(() => { alert("Failed to reach physical motor relay."); });
+        }
+
+        // Auto execution loops
+        setInterval(fetchLiveLevels, 3000);
+        fetchLiveLevels();
     </script>
 </body>
 </html>
