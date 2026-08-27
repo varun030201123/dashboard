@@ -4,12 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Building Water Dashboard</title>
-    <!-- Premium Web Fonts -->
+    <!-- Premium Fonts -->
     <link rel="preconnect" href="https://googleapis.com">
     <link rel="preconnect" href="https://gstatic.com" crossorigin>
     <link href="https://googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
-    <!-- Modern Styling Engine & Cloud Stream Libraries -->
-    <script src="https://jsdelivr.net"></script>
+    <!-- Universally Supported Styling Engine (Auto-initializes everywhere) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Cloud Connection Engine -->
     <script src="https://unpkg.com"></script>
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
@@ -20,14 +21,14 @@
     <div class="max-w-4xl mx-auto w-full space-y-6">
         
         <!-- Header Section -->
-        <header class="text-center md:text-left border-b border-slate-800 pb-4 flex flex-col md:flex-row justify-between items-center gap-2">
+        <header class="text-center md:text-left border-b border-slate-850 pb-4 flex flex-col md:flex-row justify-between items-center gap-2">
             <div>
-                <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent uppercase">Building Water Dashboard</h1>
+                <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight text-cyan-400 uppercase">Building Water Dashboard</h1>
                 <p class="text-slate-400 text-xs mt-1 font-medium tracking-wide">Shared Infrastructure Portal • Live Monitoring</p>
             </div>
-            <div class="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/30 rounded-full">
-                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-                <span class="text-[10px] uppercase font-bold text-emerald-400 tracking-wider">Cloud Engine Live</span>
+            <div class="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span class="text-[10px] uppercase font-bold text-emerald-400 tracking-wider">Cloud Engine Active</span>
             </div>
         </header>
 
@@ -35,41 +36,41 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             
             <!-- HITACHI TANK -->
-            <div class="bg-gradient-to-b from-[#161f30] to-[#111827] p-6 rounded-2xl border border-slate-800/80 shadow-2xl flex flex-col justify-between space-y-4 hover:border-blue-500/40 transition-all duration-300">
+            <div class="bg-[#111827] p-6 rounded-2xl border border-slate-800 shadow-2xl flex flex-col justify-between space-y-4">
                 <div class="text-center space-y-1">
                     <p class="text-[11px] uppercase text-slate-400 font-bold tracking-widest">Hitachi Tank</p>
-                    <h2 id="hitachi-pct" class="text-4xl font-extrabold text-cyan-400 tracking-tight drop-shadow-[0_0_15px_rgba(34,211,238,0.2)]">0%</h2>
+                    <h2 id="hitachi-pct" class="text-4xl font-extrabold text-cyan-400 tracking-tight">0%</h2>
                 </div>
-                <div class="w-full bg-slate-950/80 rounded-xl h-7 p-1 overflow-hidden border border-slate-800 shadow-inner">
-                    <div id="hitachi-bar" class="bg-gradient-to-r from-blue-600 to-cyan-400 h-full rounded-lg transition-all duration-1000 ease-in-out shadow-[0_0_10px_rgba(6,182,212,0.4)]" style="width: 0%;"></div>
+                <div class="w-full bg-slate-950 rounded-xl h-6 p-1 overflow-hidden border border-slate-800">
+                    <div id="hitachi-bar" class="bg-gradient-to-r from-blue-600 to-cyan-400 h-full rounded-lg transition-all duration-1000 ease-in-out" style="width: 0%;"></div>
                 </div>
-                <button onclick="sendPulse('hitachi')" class="w-full py-3 bg-blue-600/90 hover:bg-blue-500 active:scale-95 transition-all text-white font-bold rounded-xl text-xs uppercase tracking-wider shadow-lg shadow-blue-900/40 cursor-pointer">
+                <button onclick="sendPulse('hitachi')" class="w-full py-3 bg-blue-600 hover:bg-blue-500 active:scale-95 transition-all text-white font-bold rounded-xl text-xs uppercase tracking-wider shadow-lg shadow-blue-900/40 cursor-pointer">
                     Pulse Motor
                 </button>
             </div>
 
             <!-- KAVERI TANK -->
-            <div class="bg-gradient-to-b from-[#161f30] to-[#111827] p-6 rounded-2xl border border-slate-800/80 shadow-2xl flex flex-col justify-between space-y-4 hover:border-red-500/40 transition-all duration-300">
+            <div class="bg-[#111827] p-6 rounded-2xl border border-slate-800 shadow-2xl flex flex-col justify-between space-y-4">
                 <div class="text-center space-y-1">
                     <p class="text-[11px] uppercase text-slate-400 font-bold tracking-widest">Kaveri Tank</p>
-                    <h2 id="kaveri-pct" class="text-4xl font-extrabold text-cyan-400 tracking-tight drop-shadow-[0_0_15px_rgba(34,211,238,0.2)]">0%</h2>
+                    <h2 id="kaveri-pct" class="text-4xl font-extrabold text-cyan-400 tracking-tight">0%</h2>
                 </div>
-                <div class="w-full bg-slate-950/80 rounded-xl h-7 p-1 overflow-hidden border border-slate-800 shadow-inner">
-                    <div id="kaveri-bar" class="bg-gradient-to-r from-blue-600 to-cyan-400 h-full rounded-lg transition-all duration-1000 ease-in-out shadow-[0_0_10px_rgba(6,182,212,0.4)]" style="width: 0%;"></div>
+                <div class="w-full bg-slate-950 rounded-xl h-6 p-1 overflow-hidden border border-slate-800">
+                    <div id="kaveri-bar" class="bg-gradient-to-r from-blue-600 to-cyan-400 h-full rounded-lg transition-all duration-1000 ease-in-out" style="width: 0%;"></div>
                 </div>
-                <button onclick="sendPulse('kaveri')" class="w-full py-3 bg-red-600/90 hover:bg-red-500 active:scale-95 transition-all text-white font-bold rounded-xl text-xs uppercase tracking-wider shadow-lg shadow-red-900/40 cursor-pointer">
+                <button onclick="sendPulse('kaveri')" class="w-full py-3 bg-red-600 hover:bg-red-500 active:scale-95 transition-all text-white font-bold rounded-xl text-xs uppercase tracking-wider shadow-lg shadow-red-900/40 cursor-pointer">
                     Pulse Motor
                 </button>
             </div>
 
             <!-- UNDERGROUND SUMP -->
-            <div class="bg-gradient-to-b from-[#161f30] to-[#111827] p-6 rounded-2xl border border-slate-800/80 shadow-2xl flex flex-col justify-between space-y-4 hover:border-emerald-500/40 transition-all duration-300">
+            <div class="bg-[#111827] p-6 rounded-2xl border border-slate-800 shadow-2xl flex flex-col justify-between space-y-4">
                 <div class="text-center space-y-1">
                     <p class="text-[11px] uppercase text-slate-400 font-bold tracking-widest">Underground Sump</p>
-                    <h2 id="sump-pct" class="text-4xl font-extrabold text-emerald-400 tracking-tight drop-shadow-[0_0_15px_rgba(52,211,153,0.2)]">0%</h2>
+                    <h2 id="sump-pct" class="text-4xl font-extrabold text-emerald-400 tracking-tight">0%</h2>
                 </div>
-                <div class="w-full bg-slate-950/80 rounded-xl h-7 p-1 overflow-hidden border border-slate-800 shadow-inner">
-                    <div id="sump-bar" class="bg-gradient-to-r from-emerald-600 to-teal-400 h-full rounded-lg transition-all duration-1000 ease-in-out shadow-[0_0_10px_rgba(16,185,129,0.4)]" style="width: 0%;"></div>
+                <div class="w-full bg-slate-950 rounded-xl h-6 p-1 overflow-hidden border border-slate-800">
+                    <div id="sump-bar" class="bg-gradient-to-r from-emerald-600 to-teal-400 h-full rounded-lg transition-all duration-1000 ease-in-out" style="width: 0%;"></div>
                 </div>
                 <div class="py-2.5 text-center bg-slate-900/40 text-slate-500 text-[10px] uppercase tracking-wider font-bold border border-slate-800/40 rounded-xl">
                     Monitoring Only
@@ -79,7 +80,7 @@
         </div>
 
         <!-- ZEBRONICS CONTROL CARD -->
-        <div class="bg-gradient-to-r from-[#161f30] to-[#111827] p-6 rounded-2xl border border-slate-800 shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-6 mt-6 hover:border-slate-700/80 transition-all duration-300">
+        <div class="bg-[#111827] p-6 rounded-2xl border border-slate-800 shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-6 mt-6">
             <div class="space-y-1 text-center sm:text-left">
                 <h3 class="text-lg font-bold text-slate-100 tracking-tight">Main Zebronics Smart Plug</h3>
                 <p class="text-[11px] text-slate-500 font-medium">Hardware Node ID: d7210d68a7251db57e6vrz</p>
@@ -88,14 +89,13 @@
                     <span id="plug-status" class="text-xs font-extrabold uppercase bg-slate-900 px-2.5 py-0.5 rounded-md border border-slate-800 text-slate-400">Loading...</span>
                 </div>
             </div>
-            <button onclick="toggleZebronicsPlug()" class="w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 active:scale-98 transition-all text-white font-extrabold rounded-xl uppercase tracking-wider text-xs shadow-xl shadow-blue-900/30 cursor-pointer">
+            <button onclick="toggleZebronicsPlug()" class="w-full sm:w-auto px-8 py-3.5 bg-blue-600 hover:bg-blue-500 active:scale-98 transition-all text-white font-extrabold rounded-xl uppercase tracking-wider text-xs shadow-xl shadow-blue-900/30 cursor-pointer">
                 Toggle Smart Plug
             </button>
         </div>
 
     </div>
 
-    <!-- Script Block -->
     <script>
         const client = mqtt.connect("wss://://hivemq.com");
         const TOPIC_WATER = "varunshouse789/water/data";
@@ -132,7 +132,7 @@
                 const statusElement = document.getElementById('plug-status');
                 if (payload.toUpperCase() === "ON") {
                     statusElement.innerText = "ON";
-                    statusElement.className = "text-xs font-extrabold uppercase bg-emerald-500/10 px-2.5 py-0.5 rounded-md border border-emerald-500/30 text-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.15)]";
+                    statusElement.className = "text-xs font-extrabold uppercase bg-emerald-500/10 px-2.5 py-0.5 rounded-md border border-emerald-500/30 text-emerald-400";
                 } else if (payload.toUpperCase() === "OFF") {
                     statusElement.innerText = "OFF";
                     statusElement.className = "text-xs font-extrabold uppercase bg-rose-500/10 px-2.5 py-0.5 rounded-md border border-rose-500/30 text-rose-400";
