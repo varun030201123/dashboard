@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shared Water Dashboard</title>
+    <!-- Modern Styling Engine -->
+    <script src="https://jsdelivr.net"></script>
+    <!-- Cloud Streaming Library -->
+    <script src="https://unpkg.com"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen p-6 font-sans">
+
+    <div class="max-w-3xl mx-auto">
+        <!-- Header -->
+        <header class="mb-8 text-center md:text-left">
+            <h1 class="text-3xl font-bold text-teal-400">Community Water Hub</h1>
+            <p class="text-slate-400 text-sm">Live Monitoring & Pump Control Panel</p>
+        </header>
+
+        <!-- Main Dashboard Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            <!-- Global Water Level Widget -->
+            <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl flex flex-col items-center">
+                <h2 class="text-lg font-semibold mb-4 text-slate-300">Water Tank Level</h2>
+                
+                <!-- Circular Fluid Gauge -->
+                <div class="relative w-40 h-40 rounded-full border-4 border-slate-700 flex items-center justify-center overflow-hidden bg-slate-950">
+                    <div id="water-fluid" class="absolute bottom-0 left-0 right-0 bg-blue-500/40 transition-all duration-1000 ease-in-out" style="height: 0%;"></div>
+                    <span id="water-text" class="text-3xl font-black text-white z-10">0%</span>
+                </div>
+                <p id="water-status" class="mt-4 text-xs text-slate-500">Connecting to stream...</p>
+            </div>
+
+            <!-- Zebronics Smart Plug (Shared Pump Switch) -->
+            <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl flex flex-col justify-between">
+                <div>
+                    <h2 class="text-lg font-semibold text-slate-300">Shared Water Pump</h2>
+                    <p class="text-xs text-slate-500 mb-2">Device: Zebronics Smart Plug</p>
+                    <p class="text-xs text-emerald-400/80">Status: Shared Access</p>
+                </div>
+                <div class="flex items-center justify-between mt-6">
+                    <span id="pump-state" class="text-sm font-medium text-slate-400">READY</span>
+                    <button onclick="togglePump()" class="px-6 py-2.5 bg-teal-500 hover:bg-teal-600 active:scale-95 transition-all text-slate-950 font-bold rounded-xl cursor-pointer text-sm">
+                        Toggle Pump
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Secure random string cloud path linking back to your new bridge ESP32
+        const MQTT_TOPIC = "varunshouse789/water/level";
+        const client = mqtt.connect("wss://://hivemq.com");
+
+        // MQTT Stream Listener
+        client.on('connect', () => {
+            document.getElementById('water-status').innerText = "Live Cloud Feed Active";
+            document.getElementById('water-status').classList.replace('text-slate-500', 'text-teal-400');
+            client.subscribe(MQTT_TOPIC);
+        });
+
+        client.on('message', (topic, message) => {
+            if (topic === MQTT_TOPIC) {
+                const level = parseInt(message.toString(), 10);
+                if (!isNaN(level) && level >= 0 && level 
+</body>
+</html>
