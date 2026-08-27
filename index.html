@@ -14,6 +14,8 @@
         .pct { font-size: 38px; font-weight: 800; color: #22d3ee; margin: 5px 0; }
         .bar-bg { background-color: #020617; border: 1px solid #1e293b; border-radius: 6px; height: 14px; padding: 2px; overflow: hidden; }
         .bar { background: linear-gradient(to right, #2563eb, #22d3ee); height: 100%; border-radius: 4px; width: 0%; transition: width 0.5s ease; }
+        .sump-text { color: #34d399; }
+        .sump-bar { background: linear-gradient(to right, #059669, #34d399); }
     </style>
 </head>
 <body>
@@ -41,20 +43,35 @@
         <div class="card">
             <p class="title">Underground Sump</p>
             <div id="s" class="pct" style="color: #34d399;">0%</div>
-            <div class="bar-bg"><div id="sb" class="bar" style="background: linear-gradient(to right, #059669, #34d399);"></div></div>
+            <div class="bar-bg"><div id="sb" class="bar sump-bar"></div></div>
         </div>
     </div>
 
     <script>
         async function loadStoredLevels() {
             try {
-                // Instantly grabs historical data straight from your repository asset loop
+                // Instantly grabs historical raw data straight from your repository asset loop
                 const response = await fetch("data.json?t=" + new Date().getTime());
-                const data = await response.json();
-                if (data) {
-                    if(data.hitachi != null) { document.getElementById('h').innerText = data.hitachi + "%"; document.getElementById('hb').style.width = data.hitachi + "%"; }
-                    if(data.kaveri != null) { document.getElementById('k').innerText = data.kaveri + "%"; document.getElementById('kb').style.width = data.kaveri + "%"; }
-                    if(data.sump != null) { document.getElementById('s').innerText = data.sump + "%"; document.getElementById('sb').style.width = data.sump + "%"; }
+                const rawText = await response.text();
+                
+                if (rawText) {
+                    // Browser safely extracts numbers directly from the text dump using regex search scans
+                    const matchHitachi = rawText.match(/Hitachi.*?(\d+)%/i);
+                    const matchKaveri = rawText.match(/Kaveri.*?(\d+)%/i);
+                    const matchSump = rawText.match(/Sump.*?(\d+)%/i);
+
+                    if (matchHitachi) { 
+                        document.getElementById('h').innerText = matchHitachi[1] + "%"; 
+                        document.getElementById('hb').style.width = matchHitachi[1] + "%"; 
+                    }
+                    if (matchKaveri) { 
+                        document.getElementById('k').innerText = matchKaveri[1] + "%"; 
+                        document.getElementById('kb').style.width = matchKaveri[1] + "%"; 
+                    }
+                    if (matchSump) { 
+                        document.getElementById('s').innerText = matchSump[1] + "%"; 
+                        document.getElementById('sb').style.width = matchSump[1] + "%"; 
+                    }
                 }
             } catch (e) {}
         }
