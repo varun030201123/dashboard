@@ -21,7 +21,6 @@
             <div class="w-full bg-slate-950 rounded-full h-8 overflow-hidden relative border border-slate-800 mt-2">
                 <div id="hitachi-bar" class="bg-blue-600 h-full transition-all duration-1000 ease-in-out" style="width: 0%;"></div>
             </div>
-            <!-- Pulse Button -->
             <button onclick="sendPulse('hitachi')" class="w-full mt-4 py-2.5 bg-blue-500 hover:bg-blue-600 active:scale-95 transition-all text-white font-bold rounded-md uppercase tracking-wider text-xs cursor-pointer">
                 Pulse Hitachi Motor
             </button>
@@ -34,7 +33,6 @@
             <div class="w-full bg-slate-950 rounded-full h-8 overflow-hidden relative border border-slate-800 mt-2">
                 <div id="kaveri-bar" class="bg-blue-600 h-full transition-all duration-1000 ease-in-out" style="width: 0%;"></div>
             </div>
-            <!-- Pulse Button -->
             <button onclick="sendPulse('kaveri')" class="w-full mt-4 py-2.5 bg-red-500 hover:bg-red-600 active:scale-95 transition-all text-white font-bold rounded-md uppercase tracking-wider text-xs cursor-pointer">
                 Pulse Kaveri Motor
             </button>
@@ -49,11 +47,13 @@
             </div>
         </div>
 
-        <!-- ZEBRONICS PUMP SWITCH -->
+        <!-- ZEBRONICS PUMP SWITCH WITH STATUS -->
         <div class="bg-[#1F2937] p-6 rounded-lg border border-slate-800 shadow-xl flex flex-col md:flex-row items-center justify-between gap-4 mt-6">
             <div>
                 <h3 class="text-lg font-bold text-slate-200">Main Zebronics Smart Plug</h3>
                 <p class="text-xs text-slate-500">Hardware Node ID: d7210d68a7251db57e6vrz</p>
+                <!-- Live Status Indicator Text -->
+                <p class="text-sm font-semibold mt-1">Plug State: <span id="plug-status" class="text-gray-400 uppercase">Loading...</span></p>
             </div>
             <button onclick="toggleZebronicsPlug()" class="w-full md:w-auto px-10 py-3 bg-[#3B82F6] hover:bg-blue-600 text-white font-bold rounded-md uppercase tracking-wider text-sm shadow-md cursor-pointer">
                 Toggle Zebronics Plug
@@ -65,15 +65,19 @@
         const client = mqtt.connect("wss://://hivemq.com");
         const TOPIC_WATER = "varunshouse789/water/data";
         const TOPIC_COMMANDS = "varunshouse789/water/commands";
+        const TOPIC_PLUG_STATUS = "varunshouse789/zebronics/status";
 
         client.on('connect', () => { 
             client.subscribe(TOPIC_WATER); 
+            client.subscribe(TOPIC_PLUG_STATUS); // Listens to the plug status cloud stream
         });
 
         client.on('message', (topic, message) => {
+            const payload = message.toString();
+
             if (topic === TOPIC_WATER) {
                 try {
-                    const data = JSON.parse(message.toString());
+                    const data = JSON.parse(payload);
                     if(data.hitachi !== undefined) {
                         document.getElementById('hitachi-pct').innerText = data.hitachi + "%";
                         document.getElementById('hitachi-bar').style.width = data.hitachi + "%";
@@ -88,16 +92,29 @@
                     }
                 } catch(e) { console.log("JSON error"); }
             }
+            
+            // Handle Live ON/OFF Status updates
+            if (topic === TOPIC_PLUG_STATUS) {
+                const statusElement = document.getElementById('plug-status');
+                if (payload.toUpperCase() === "ON") {
+                    statusElement.innerText = "ON";
+                    statusElement.className = "text-emerald-400 font-bold uppercase animate-pulse";
+                } else if (payload.toUpperCase() === "OFF") {
+                    statusElement.innerText = "OFF";
+                    statusElement.className = "text-rose-500 font-bold uppercase";
+                }
+            }
         });
 
-        // Sends a single quick command text back to the house ESP32 gateway
         function sendPulse(motorName) {
             client.publish(TOPIC_COMMANDS, motorName);
             alert("Sent quick pulse single trigger to " + motorName + " motor!");
         }
 
         function toggleZebronicsPlug() {
-            alert("Zebronics command button clicked!");
+            // Once we generate your private link, we paste it here to toggle the plug
+            fetch('https://ifttt.com')
+            .then(res => { alert("Zebronics toggle switch triggered!"); });
         }
     </script>
 </body>
