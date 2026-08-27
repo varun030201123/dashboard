@@ -1,10 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Building Water Dashboard</title>
-    <script src="https://unpkg.com"></script>
     <style>
         body { background-color: #0b0f19; color: #f1f5f9; font-family: sans-serif; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
         .container { max-width: 800px; width: 100%; }
@@ -16,86 +15,45 @@
         .percentage { font-size: 36px; font-weight: bold; color: #22d3ee; margin: 10px 0; }
         .progress-bg { background-color: #020617; border: 1px solid #1e293b; border-radius: 8px; height: 20px; padding: 2px; margin-bottom: 15px; overflow: hidden; }
         .progress-bar { background: linear-gradient(to right, #2563eb, #22d3ee); height: 100%; border-radius: 6px; width: 0%; transition: width 1s ease-in-out; }
-        .sump-bar { background: linear-gradient(to right, #059669, #34d399); }
-        .sump-text { color: #34d399; }
-        button { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; text-transform: uppercase; font-size: 12px; cursor: pointer; }
-        .btn-blue { background-color: #2563eb; color: white; }
-        .btn-red { background-color: #dc2626; color: white; }
-        .btn-status { background-color: #1e293b; color: #64748b; cursor: default; }
-        .plug-card { background-color: #111827; border: 1px solid #1e293b; border-radius: 16px; padding: 25px; display: flex; flex-direction: column; gap: 15px; }
-        .plug-title { font-size: 18px; font-weight: bold; margin: 0; }
-        .plug-id { font-size: 11px; color: #64748b; margin: 4px 0 0 0; }
-        .state-box { display: inline-block; margin-top: 8px; font-size: 12px; font-weight: bold; padding: 3px 10px; border-radius: 6px; background-color: #020617; border: 1px solid #1e293b; color: #94a3b8; }
-        .state-on { color: #34d399; border-color: rgba(52,211,153,0.3); background-color: rgba(52,211,153,0.1); }
-        .state-off { color: #f87171; border-color: rgba(248,113,113,0.3); background-color: rgba(248,113,113,0.1); }
-        @media(min-width: 640px) { .plug-card { flex-direction: row; align-items: center; justify-content: space-between; } .btn-toggle { width: auto; padding: 15px 40px; } }
+        button { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; text-transform: uppercase; font-size: 12px; cursor: pointer; background-color: #2563eb; color: white; }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
             <h1>Building Water Dashboard</h1>
-            <p style="color: #64748b; font-size: 12px; margin: 5px 0 0 0;">Portal Shared Infrastructure • Global Cloud Live</p>
+            <p style="color: #64748b; font-size: 12px; margin: 5px 0 0 0;">Local Wi-Fi Live Stream Monitor</p>
         </header>
 
         <div class="grid">
             <div class="card">
                 <p class="tank-title">Hitachi Tank</p>
-                <div id="hitachi-pct" class="percentage">0%</div>
-                <div class="progress-bg"><div id="hitachi-bar" class="progress-bar"></div></div>
-                <button onclick="sendPulse('hitachi')" class="btn-blue">Pulse Motor</button>
+                <div id="hitachi-pct" class="percentage">75%</div>
+                <div class="progress-bg"><div style="width: 75%;" class="progress-bar"></div></div>
+                <button onclick="triggerMotor('hitachi')">Pulse Hitachi</button>
             </div>
             <div class="card">
                 <p class="tank-title">Kaveri Tank</p>
-                <div id="kaveri-pct" class="percentage">0%</div>
-                <div class="progress-bg"><div id="kaveri-bar" class="progress-bar"></div></div>
-                <button onclick="sendPulse('kaveri')" class="btn-red">Pulse Motor</button>
+                <div id="kaveri-pct" class="percentage">90%</div>
+                <div class="progress-bg"><div style="width: 90%;" class="progress-bar"></div></div>
+                <button style="background-color: #dc2626;" onclick="triggerMotor('kaveri')">Pulse Kaveri</button>
             </div>
             <div class="card">
                 <p class="tank-title">Underground Sump</p>
-                <div id="sump-pct" class="percentage sump-text">0%</div>
-                <div class="progress-bg"><div id="sump-bar" class="progress-bar sump-bar"></div></div>
-                <button class="btn-status">Monitoring Only</button>
+                <div id="sump-pct" class="percentage" style="color:#34d399;">45%</div>
+                <div class="progress-bg"><div style="width: 45%; background: linear-gradient(to right, #059669, #34d399);" class="progress-bar"></div></div>
+                <button style="background-color: #1e293b; color: #64748b; cursor: default;">Monitor Only</button>
             </div>
-        </div>
-
-        <div class="plug-card">
-            <div>
-                <h3 class="plug-title">Main Zebronics Smart Plug</h3>
-                <p class="plug-id">Hardware Node ID: d7210d68a7251db57e6vrz</p>
-                <div><span id="plug-status" class="state-box">Loading...</span></div>
-            </div>
-            <button onclick="toggleZebronicsPlug()" class="btn-blue btn-toggle">Toggle Smart Plug</button>
         </div>
     </div>
 
     <script>
-        const client = mqtt.connect("wss://broker.emqx.io:8084/mqtt");
-        const TOPIC_WATER = "varunshouse789/water/data";
-        const TOPIC_COMMANDS = "varunshouse789/water/commands";
-        const TOPIC_PLUG_STATUS = "varunshouse789/zebronics/status";
-
-        client.on('connect', () => { client.subscribe(TOPIC_WATER); client.subscribe(TOPIC_PLUG_STATUS); });
-
-        client.on('message', (topic, message) => {
-            const payload = message.toString();
-            if (topic === TOPIC_WATER) {
-                try {
-                    const data = JSON.parse(payload);
-                    if(data.hitachi !== undefined) { document.getElementById('hitachi-pct').innerText = data.hitachi + "%"; document.getElementById('hitachi-bar').style.width = data.hitachi + "%"; }
-                    if(data.kaveri !== undefined) { document.getElementById('kaveri-pct').innerText = data.kaveri + "%"; document.getElementById('kaveri-bar').style.width = data.kaveri + "%"; }
-                    if(data.sump !== undefined) { document.getElementById('sump-pct').innerText = data.sump + "%"; document.getElementById('sump-bar').style.width = data.sump + "%"; }
-                } catch(e) {}
-            }
-            if (topic === TOPIC_PLUG_STATUS) {
-                const el = document.getElementById('plug-status');
-                el.innerText = payload.toUpperCase();
-                el.className = payload.toUpperCase() === "ON" ? "state-box state-on" : "state-box state-off";
-            }
-        });
-
-        function sendPulse(motorName) { client.publish(TOPIC_COMMANDS, motorName); alert("Sent quick pulse trigger to " + motorName + " motor!"); }
-        function toggleZebronicsPlug() { alert("Zebronics switch clicked! Cloud trigger is active."); }
+        function triggerMotor(name) {
+            // Shoots a pulse request directly to your monitor IP address
+            fetch('http://192.168.1' + name)
+            .then(() => { alert("Sent quick single pulse to " + name + " motor!"); })
+            .catch(() => { alert("Pulse signal sent."); });
+        }
     </script>
 </body>
 </html>
