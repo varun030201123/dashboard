@@ -4,26 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Building Water Dashboard</title>
+    <!-- Universally Supported Cloud Streaming Libraries -->
+    <script src="https://unpkg.com"></script>
     <style>
         body { background-color: #0b0f19; color: #f1f5f9; font-family: sans-serif; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
         .container { max-width: 800px; width: 100%; }
         header { text-align: center; border-bottom: 1px solid #1e293b; padding-bottom: 20px; margin-bottom: 30px; }
         h1 { color: #22d3ee; text-transform: uppercase; letter-spacing: 2px; margin: 0; }
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 30px; }
-        .card { background-color: #111827; border: 1px solid #1e293b; border-radius: 16px; padding: 20px; text-align: center; }
+        .card { background-color: #111827; border: 1px solid #1e293b; border-radius: 16px; padding: 20px; text-align: center; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); }
         .tank-title { text-transform: uppercase; color: #94a3b8; font-size: 12px; font-weight: bold; margin: 0 0 10px 0; }
-        .percentage { font-size: 36px; font-weight: bold; color: #22d3ee; margin: 10px 0; }
+        .percentage { font-size: 36px; font-weight: 800; color: #22d3ee; margin: 10px 0; }
         .progress-bg { background-color: #020617; border: 1px solid #1e293b; border-radius: 8px; height: 20px; padding: 2px; margin-bottom: 15px; overflow: hidden; }
         .progress-bar { background: linear-gradient(to right, #2563eb, #22d3ee); height: 100%; border-radius: 6px; width: 0%; transition: width 1s ease-in-out; }
-        button { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; text-transform: uppercase; font-size: 12px; cursor: pointer; background-color: #2563eb; color: white; }
+        button { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; text-transform: uppercase; font-size: 12px; cursor: pointer; transition: background 0.2s; }
+        .btn-blue { background-color: #2563eb; color: white; }
+        .btn-red { background-color: #dc2626; color: white; }
     </style>
 </head>
 <body>
+
     <div class="container">
         <!-- Header -->
         <header>
             <h1>Building Water Dashboard</h1>
-            <p id="sync-status" style="color: #eab308; font-size: 12px; margin: 5px 0 0 0;">Connecting to local monitor...</p>
+            <p id="sync-status" style="color: #eab308; font-size: 12px; margin: 5px 0 0 0;">Connecting to Cloud Stream...</p>
         </header>
 
         <!-- Tanks Grid -->
@@ -31,70 +36,70 @@
             <!-- HITACHI -->
             <div class="card">
                 <p class="tank-title">Hitachi Tank</p>
-                <div id="hitachi-pct" class="percentage">Loading...</div>
-                <div class="progress-bg"><div id="hitachi-bar" style="width: 0%;" class="progress-bar"></div></div>
-                <button onclick="triggerMotor('hitachi')">Pulse Hitachi</button>
+                <div id="hitachi-pct" class="percentage">0%</div>
+                <div class="progress-bg"><div id="hitachi-bar" class="progress-bar"></div></div>
+                <button onclick="sendPulse('hitachi')" class="btn-blue">Pulse Hitachi</button>
             </div>
             <!-- KAVERI -->
             <div class="card">
                 <p class="tank-title">Kaveri Tank</p>
-                <div id="kaveri-pct" class="percentage">Loading...</div>
-                <div class="progress-bg"><div id="kaveri-bar" style="width: 0%;" class="progress-bar"></div></div>
-                <button style="background-color: #dc2626;" onclick="triggerMotor('kaveri')">Pulse Kaveri</button>
+                <div id="kaveri-pct" class="percentage">0%</div>
+                <div class="progress-bg"><div id="kaveri-bar" class="progress-bar"></div></div>
+                <button onclick="sendPulse('kaveri')" class="btn-red">Pulse Kaveri</button>
             </div>
             <!-- SUMP -->
             <div class="card">
                 <p class="tank-title">Underground Sump</p>
-                <div id="sump-pct" class="percentage" style="color:#34d399;">Loading...</div>
-                <div class="progress-bg"><div id="sump-bar" style="width: 0%; background: linear-gradient(to right, #059669, #34d399);" class="progress-bar"></div></div>
-                <button style="background-color: #1e293b; color: #64748b; cursor: default;">Monitor Only</button>
+                <div id="sump-pct" class="percentage" style="color: #34d399;">0%</div>
+                <div class="progress-bg"><div id="sump-bar" class="progress-bar" style="background: linear-gradient(to right, #059669, #34d399);"></div></div>
+                <button style="background-color: #1e293b; color: #64748b; cursor: default;">Monitoring Only</button>
             </div>
         </div>
     </div>
 
     <script>
-        const monitorIp = "http://192.168.1.198";
+        // Connect directly through secure websocket port 8084
+        const client = mqtt.connect("wss://broker.emqx.io:8084/mqtt");
+        const TOPIC_WATER = "varunshouse789/water/data";
+        const TOPIC_COMMANDS = "varunshouse789/water/commands";
 
-        // This function runs automatically every 3 seconds to fetch real values
-        async function fetchLiveLevels() {
-            try {
-                // Adjust this path if your monitor serves data on an endpoint like /api/data
-                const response = await fetch(monitorIp + "/api/getlevels"); 
-                const data = await response.json();
-                
-                // Update Hitachi Tank GUI
-                if(data.hitachi !== undefined) {
-                    document.getElementById('hitachi-pct').innerText = data.hitachi + "%";
-                    document.getElementById('hitachi-bar').style.width = data.hitachi + "%";
-                }
-                // Update Kaveri Tank GUI
-                if(data.kaveri !== undefined) {
-                    document.getElementById('kaveri-pct').innerText = data.kaveri + "%";
-                    document.getElementById('kaveri-bar').style.width = data.kaveri + "%";
-                }
-                // Update Sump GUI
-                if(data.sump !== undefined) {
-                    document.getElementById('sump-pct').innerText = data.sump + "%";
-                    document.getElementById('sump-bar').style.width = data.sump + "%";
-                }
+        client.on('connect', () => { 
+            document.getElementById('sync-status').innerText = "Global Cloud Routing Active";
+            document.getElementById('sync-status').style.color = "#10b981";
+            client.subscribe(TOPIC_WATER); 
+        });
 
-                document.getElementById('sync-status').innerText = "Local Wi-Fi Live Stream Active";
-                document.getElementById('sync-status').style.color = "#10b981";
-            } catch (error) {
-                document.getElementById('sync-status').innerText = "Offline: Connect to Home Wi-Fi";
-                document.getElementById('sync-status').style.color = "#ef4444";
+        client.on('message', (topic, message) => {
+            if (topic === TOPIC_WATER) {
+                try {
+                    // Browser directly extracts values from clean data stream payload
+                    const rawText = message.toString();
+                    
+                    // Simple search engine looking for values in raw page content
+                    const matchHitachi = rawText.match(/Hitachi.*?(\d+)%/i);
+                    const matchKaveri = rawText.match(/Kaveri.*?(\d+)%/i);
+                    const matchSump = rawText.match(/Sump.*?(\d+)%/i);
+
+                    if(matchHitachi) {
+                        document.getElementById('hitachi-pct').innerText = matchHitachi[1] + "%";
+                        document.getElementById('hitachi-bar').style.width = matchHitachi[1] + "%";
+                    }
+                    if(matchKaveri) {
+                        document.getElementById('kaveri-pct').innerText = matchKaveri[1] + "%";
+                        document.getElementById('kaveri-bar').style.width = matchKaveri[1] + "%";
+                    }
+                    if(matchSump) {
+                        document.getElementById('sump-pct').innerText = matchSump[1] + "%";
+                        document.getElementById('sump-bar').style.width = matchSump[1] + "%";
+                    }
+                } catch(e) {}
             }
-        }
+        });
 
-        function triggerMotor(name) {
-            fetch(monitorIp + '/' + name)
-            .then(() => { alert("Pulse signal sent to physical " + name + " motor successfully!"); })
-            .catch(() => { alert("Failed to reach physical motor relay."); });
+        function sendPulse(motorName) {
+            client.publish(TOPIC_COMMANDS, motorName);
+            alert("Sent pulse trigger to " + motorName + " motor!");
         }
-
-        // Auto execution loops
-        setInterval(fetchLiveLevels, 3000);
-        fetchLiveLevels();
     </script>
 </body>
 </html>
