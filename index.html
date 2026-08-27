@@ -4,96 +4,74 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Building Water Dashboard</title>
-    <!-- Premium Fonts -->
-    <link rel="preconnect" href="https://googleapis.com">
-    <link rel="preconnect" href="https://gstatic.com" crossorigin>
-    <link href="https://googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
-    <!-- Universally Supported Styling Engine (Auto-initializes everywhere) -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Cloud Connection Engine -->
+    <!-- Universally Supported Styling & Cloud Engines -->
+    <script src="https://tailwindcss.com"></script>
     <script src="https://unpkg.com"></script>
-    <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
-    </style>
 </head>
-<body class="bg-[#0b0f19] text-[#f1f5f9] min-h-screen p-4 md:p-8 select-none flex flex-col justify-between">
+<body class="bg-[#0b0f19] text-[#f1f5f9] min-h-screen p-4 md:p-8 flex flex-col justify-between">
 
     <div class="max-w-4xl mx-auto w-full space-y-6">
-        
-        <!-- Header Section -->
-        <header class="text-center md:text-left border-b border-slate-850 pb-4 flex flex-col md:flex-row justify-between items-center gap-2">
+        <!-- Header -->
+        <header class="text-center md:text-left border-b border-slate-800 pb-4 flex flex-col md:flex-row justify-between items-center gap-2">
             <div>
-                <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight text-cyan-400 uppercase">Building Water Dashboard</h1>
-                <p class="text-slate-400 text-xs mt-1 font-medium tracking-wide">Shared Infrastructure Portal • Live Monitoring</p>
+                <h1 class="text-2xl font-extrabold text-cyan-400 uppercase">Building Water Dashboard</h1>
+                <p class="text-slate-400 text-xs mt-1">Portal Shared Infrastructure • Live Monitoring</p>
             </div>
             <div class="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full">
                 <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                <span class="text-[10px] uppercase font-bold text-emerald-400 tracking-wider">Cloud Engine Active</span>
+                <span class="text-[10px] uppercase font-bold text-emerald-400">Cloud Active</span>
             </div>
         </header>
 
-        <!-- Tanks Grid Section -->
+        <!-- Tanks Grid -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            
-            <!-- HITACHI TANK -->
+            <!-- HITACHI -->
             <div class="bg-[#111827] p-6 rounded-2xl border border-slate-800 shadow-2xl flex flex-col justify-between space-y-4">
                 <div class="text-center space-y-1">
                     <p class="text-[11px] uppercase text-slate-400 font-bold tracking-widest">Hitachi Tank</p>
-                    <h2 id="hitachi-pct" class="text-4xl font-extrabold text-cyan-400 tracking-tight">0%</h2>
+                    <h2 id="hitachi-pct" class="text-4xl font-extrabold text-cyan-400">0%</h2>
                 </div>
-                <div class="w-full bg-slate-950 rounded-xl h-6 p-1 overflow-hidden border border-slate-800">
-                    <div id="hitachi-bar" class="bg-gradient-to-r from-blue-600 to-cyan-400 h-full rounded-lg transition-all duration-1000 ease-in-out" style="width: 0%;"></div>
+                <div class="w-full bg-slate-950 rounded-xl h-6 p-1 border border-slate-800">
+                    <div id="hitachi-bar" class="bg-gradient-to-r from-blue-600 to-cyan-400 h-full rounded-lg transition-all duration-1000" style="width: 0%;"></div>
                 </div>
-                <button onclick="sendPulse('hitachi')" class="w-full py-3 bg-blue-600 hover:bg-blue-500 active:scale-95 transition-all text-white font-bold rounded-xl text-xs uppercase tracking-wider shadow-lg shadow-blue-900/40 cursor-pointer">
-                    Pulse Motor
-                </button>
+                <button onclick="sendPulse('hitachi')" class="w-full py-3 bg-blue-600 hover:bg-blue-500 active:scale-95 text-white font-bold rounded-xl text-xs uppercase cursor-pointer">Pulse Motor</button>
             </div>
-
-            <!-- KAVERI TANK -->
+            <!-- KAVERI -->
             <div class="bg-[#111827] p-6 rounded-2xl border border-slate-800 shadow-2xl flex flex-col justify-between space-y-4">
                 <div class="text-center space-y-1">
                     <p class="text-[11px] uppercase text-slate-400 font-bold tracking-widest">Kaveri Tank</p>
-                    <h2 id="kaveri-pct" class="text-4xl font-extrabold text-cyan-400 tracking-tight">0%</h2>
+                    <h2 id="kaveri-pct" class="text-4xl font-extrabold text-cyan-400">0%</h2>
                 </div>
-                <div class="w-full bg-slate-950 rounded-xl h-6 p-1 overflow-hidden border border-slate-800">
-                    <div id="kaveri-bar" class="bg-gradient-to-r from-blue-600 to-cyan-400 h-full rounded-lg transition-all duration-1000 ease-in-out" style="width: 0%;"></div>
+                <div class="w-full bg-slate-950 rounded-xl h-6 p-1 border border-slate-800">
+                    <div id="kaveri-bar" class="bg-gradient-to-r from-blue-600 to-cyan-400 h-full rounded-lg transition-all duration-1000" style="width: 0%;"></div>
                 </div>
-                <button onclick="sendPulse('kaveri')" class="w-full py-3 bg-red-600 hover:bg-red-500 active:scale-95 transition-all text-white font-bold rounded-xl text-xs uppercase tracking-wider shadow-lg shadow-red-900/40 cursor-pointer">
-                    Pulse Motor
-                </button>
+                <button onclick="sendPulse('kaveri')" class="w-full py-3 bg-red-600 hover:bg-red-500 active:scale-95 text-white font-bold rounded-xl text-xs uppercase cursor-pointer">Pulse Motor</button>
             </div>
-
-            <!-- UNDERGROUND SUMP -->
+            <!-- SUMP -->
             <div class="bg-[#111827] p-6 rounded-2xl border border-slate-800 shadow-2xl flex flex-col justify-between space-y-4">
                 <div class="text-center space-y-1">
                     <p class="text-[11px] uppercase text-slate-400 font-bold tracking-widest">Underground Sump</p>
-                    <h2 id="sump-pct" class="text-4xl font-extrabold text-emerald-400 tracking-tight">0%</h2>
+                    <h2 id="sump-pct" class="text-4xl font-extrabold text-emerald-400">0%</h2>
                 </div>
-                <div class="w-full bg-slate-950 rounded-xl h-6 p-1 overflow-hidden border border-slate-800">
-                    <div id="sump-bar" class="bg-gradient-to-r from-emerald-600 to-teal-400 h-full rounded-lg transition-all duration-1000 ease-in-out" style="width: 0%;"></div>
+                <div class="w-full bg-slate-950 rounded-xl h-6 p-1 border border-slate-800">
+                    <div id="sump-bar" class="bg-gradient-to-r from-emerald-600 to-teal-400 h-full rounded-lg transition-all duration-1000" style="width: 0%;"></div>
                 </div>
-                <div class="py-2.5 text-center bg-slate-900/40 text-slate-500 text-[10px] uppercase tracking-wider font-bold border border-slate-800/40 rounded-xl">
-                    Monitoring Only
-                </div>
+                <div class="py-2.5 text-center bg-slate-900/40 text-slate-500 text-[10px] uppercase font-bold border border-slate-800/40 rounded-xl">Monitoring Only</div>
             </div>
-
         </div>
 
-        <!-- ZEBRONICS CONTROL CARD -->
+        <!-- ZEBRONICS SMART PLUG -->
         <div class="bg-[#111827] p-6 rounded-2xl border border-slate-800 shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-6 mt-6">
             <div class="space-y-1 text-center sm:text-left">
-                <h3 class="text-lg font-bold text-slate-100 tracking-tight">Main Zebronics Smart Plug</h3>
-                <p class="text-[11px] text-slate-500 font-medium">Hardware Node ID: d7210d68a7251db57e6vrz</p>
+                <h3 class="text-lg font-bold text-slate-100">Main Zebronics Smart Plug</h3>
+                <p class="text-[11px] text-slate-500">ID: d7210d68a7251db57e6vrz</p>
                 <div class="flex items-center justify-center sm:justify-start gap-2 mt-2">
                     <span class="text-xs font-semibold text-slate-400">Plug State:</span>
-                    <span id="plug-status" class="text-xs font-extrabold uppercase bg-slate-900 px-2.5 py-0.5 rounded-md border border-slate-800 text-slate-400">Loading...</span>
+                    <span id="plug-status" class="text-xs font-extrabold bg-slate-900 px-2.5 py-0.5 rounded-md border border-slate-800 text-slate-400">Loading...</span>
                 </div>
             </div>
-            <button onclick="toggleZebronicsPlug()" class="w-full sm:w-auto px-8 py-3.5 bg-blue-600 hover:bg-blue-500 active:scale-98 transition-all text-white font-extrabold rounded-xl uppercase tracking-wider text-xs shadow-xl shadow-blue-900/30 cursor-pointer">
-                Toggle Smart Plug
-            </button>
+            <button onclick="toggleZebronicsPlug()" class="w-full sm:w-auto px-8 py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-extrabold rounded-xl uppercase text-xs cursor-pointer">Toggle Smart Plug</button>
         </div>
-
     </div>
 
     <script>
@@ -109,7 +87,6 @@
 
         client.on('message', (topic, message) => {
             const payload = message.toString();
-
             if (topic === TOPIC_WATER) {
                 try {
                     const data = JSON.parse(payload);
@@ -125,29 +102,23 @@
                         document.getElementById('sump-pct').innerText = data.sump + "%";
                         document.getElementById('sump-bar').style.width = data.sump + "%";
                     }
-                } catch(e) { console.log("JSON parsing error"); }
+                } catch(e) {}
             }
-            
             if (topic === TOPIC_PLUG_STATUS) {
-                const statusElement = document.getElementById('plug-status');
-                if (payload.toUpperCase() === "ON") {
-                    statusElement.innerText = "ON";
-                    statusElement.className = "text-xs font-extrabold uppercase bg-emerald-500/10 px-2.5 py-0.5 rounded-md border border-emerald-500/30 text-emerald-400";
-                } else if (payload.toUpperCase() === "OFF") {
-                    statusElement.innerText = "OFF";
-                    statusElement.className = "text-xs font-extrabold uppercase bg-rose-500/10 px-2.5 py-0.5 rounded-md border border-rose-500/30 text-rose-400";
-                }
+                const el = document.getElementById('plug-status');
+                el.innerText = payload.toUpperCase();
+                el.className = payload.toUpperCase() === "ON" ? "text-xs font-extrabold bg-emerald-500/10 px-2.5 py-0.5 rounded-md border border-emerald-500/30 text-emerald-400" : "text-xs font-extrabold bg-rose-500/10 px-2.5 py-0.5 rounded-md border border-rose-500/30 text-rose-400";
             }
         });
 
+        // Trigger pulse command
         function sendPulse(motorName) {
             client.publish(TOPIC_COMMANDS, motorName);
-            alert("Sent quick pulse single trigger to " + motorName + " motor!");
+            alert("Sent quick pulse trigger to " + motorName + " motor!");
         }
 
         function toggleZebronicsPlug() {
-            fetch('https://ifttt.com')
-            .then(res => { alert("Zebronics toggle switch triggered!"); });
+            alert("Zebronics switch clicked! Link your IFTTT webhook key here later.");
         }
     </script>
 </body>
