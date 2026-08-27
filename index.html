@@ -4,96 +4,64 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Building Water Dashboard</title>
-    <!-- Universally Supported Cloud Streaming Engines -->
     <script src="https://unpkg.com"></script>
     <style>
         body { background-color: #0b0f19; color: #f1f5f9; font-family: sans-serif; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        .container { max-width: 800px; width: 100%; }
-        header { text-align: center; border-bottom: 1px solid #1e293b; padding-bottom: 20px; margin-bottom: 30px; }
-        h1 { color: #22d3ee; text-transform: uppercase; letter-spacing: 2px; margin: 0; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 30px; }
-        .card { background-color: #111827; border: 1px solid #1e293b; border-radius: 16px; padding: 20px; text-align: center; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); }
-        .tank-title { text-transform: uppercase; color: #94a3b8; font-size: 12px; font-weight: bold; margin: 0 0 10px 0; }
-        .percentage { font-size: 36px; font-weight: 800; color: #22d3ee; margin: 10px 0; }
-        .progress-bg { background-color: #020617; border: 1px solid #1e293b; border-radius: 8px; height: 20px; padding: 2px; margin-bottom: 15px; overflow: hidden; }
-        .progress-bar { background: linear-gradient(to right, #2563eb, #22d3ee); height: 100%; border-radius: 6px; width: 0%; transition: width 1s ease-in-out; }
-        button { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; text-transform: uppercase; font-size: 12px; cursor: pointer; transition: background 0.2s; }
-        .btn-blue { background-color: #2563eb; color: white; }
-        .btn-blue:hover { background-color: #1d4ed8; }
-        .btn-red { background-color: #dc2626; color: white; }
-        .btn-red:hover { background-color: #b91c1c; }
+        .container { max-width: 600px; width: 100%; }
+        header { text-align: center; border-bottom: 1px solid #1e293b; padding-bottom: 15px; margin-bottom: 25px; }
+        h1 { color: #22d3ee; text-transform: uppercase; letter-spacing: 2px; margin: 0; font-size: 24px; }
+        .card { background-color: #111827; border: 1px solid #1e293b; border-radius: 16px; padding: 20px; text-align: center; margin-bottom: 20px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); }
+        .title { text-transform: uppercase; color: #94a3b8; font-size: 11px; font-weight: bold; margin: 0 0 5px 0; }
+        .pct { font-size: 42px; font-weight: 800; color: #22d3ee; margin: 10px 0; }
+        .bar-bg { background-color: #020617; border: 1px solid #1e293b; border-radius: 6px; height: 16px; padding: 2px; overflow: hidden; }
+        .bar { background: linear-gradient(to right, #2563eb, #22d3ee); height: 100%; border-radius: 4px; width: 0%; transition: width 0.8s ease-in-out; }
+        button { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; text-transform: uppercase; font-size: 11px; cursor: pointer; margin-top: 15px; background-color: #2563eb; color: white; }
+        .btn-red { background-color: #dc2626; }
     </style>
 </head>
 <body>
-
     <div class="container">
-        <!-- Header -->
         <header>
             <h1>Building Water Dashboard</h1>
-            <p id="sync-status" style="color: #eab308; font-size: 12px; margin: 5px 0 0 0;">Connecting to Global Cloud Pipeline...</p>
+            <p id="state" style="color: #eab308; font-size: 11px; margin: 5px 0 0 0;">Connecting Global Stream...</p>
         </header>
 
-        <!-- Tanks Grid Section -->
-        <div class="grid">
-            <!-- HITACHI -->
-            <div class="card">
-                <p class="tank-title">Hitachi Tank</p>
-                <div id="hitachi-pct" class="percentage">0%</div>
-                <div class="progress-bg"><div id="hitachi-bar" class="progress-bar"></div></div>
-                <button onclick="sendPulse('hitachi')" class="btn-blue">Pulse Hitachi</button>
-            </div>
-            <!-- KAVERI -->
-            <div class="card">
-                <p class="tank-title">Kaveri Tank</p>
-                <div id="kaveri-pct" class="percentage">0%</div>
-                <div class="progress-bg"><div id="kaveri-bar" class="progress-bar"></div></div>
-                <button onclick="sendPulse('kaveri')" class="btn-red">Pulse Kaveri</button>
-            </div>
-            <!-- UNDERGROUND SUMP -->
-            <div class="card">
-                <p class="tank-title">Underground Sump</p>
-                <div id="sump-pct" class="percentage" style="color: #34d399;">0%</div>
-                <div class="progress-bg"><div id="sump-bar" class="progress-bar" style="background: linear-gradient(to right, #059669, #34d399);"></div></div>
-                <button style="background-color: #1e293b; color: #64748b; cursor: default;">Monitoring Only</button>
-            </div>
+        <!-- HITACHI -->
+        <div class="card">
+            <p class="title">Hitachi Tank</p>
+            <div id="h-pct" class="pct">0%</div>
+            <div class="bar-bg"><div id="h-bar" class="bar"></div></div>
+            <button onclick="pulse('hitachi')">Pulse Hitachi</button>
+        </div>
+
+        <!-- KAVERI -->
+        <div class="card">
+            <p class="title">Kaveri Tank</p>
+            <div id="k-pct" class="pct">0%</div>
+            <div class="bar-bg"><div id="k-bar" class="bar"></div></div>
+            <button onclick="pulse('kaveri')" class="btn-red">Pulse Kaveri</button>
         </div>
     </div>
 
     <script>
-        // Connecting securely via encrypted pipeline port 8084
-        const client = mqtt.connect("wss://broker.emqx.io:8084/mqtt");
-        const TOPIC_WATER = "varunshouse789/water/data";
-        const TOPIC_COMMANDS = "varunshouse789/water/commands";
-
+        // Automatic safe cloud receiver pipeline connection
+        const client = mqtt.connect("wss://://hivemq.com");
+        
         client.on('connect', () => { 
-            document.getElementById('sync-status').innerText = "Global Cloud Routing Active";
-            document.getElementById('sync-status').style.color = "#10b981";
-            client.subscribe(TOPIC_WATER); 
+            document.getElementById('state').innerText = "Live Global Connection Active";
+            document.getElementById('state').style.color = "#10b981";
+            client.subscribe("varunshouse789/data"); 
         });
 
-        client.on('message', (topic, message) => {
-            if (topic === TOPIC_WATER) {
-                try {
-                    const data = JSON.parse(message.toString());
-                    if(data.hitachi !== undefined) {
-                        document.getElementById('hitachi-pct').innerText = data.hitachi + "%";
-                        document.getElementById('hitachi-bar').style.width = data.hitachi + "%";
-                    }
-                    if(data.kaveri !== undefined) {
-                        document.getElementById('kaveri-pct').innerText = data.kaveri + "%";
-                        document.getElementById('kaveri-bar').style.width = data.kaveri + "%";
-                    }
-                    if(data.sump !== undefined) {
-                        document.getElementById('sump-pct').innerText = data.sump + "%";
-                        document.getElementById('sump-bar').style.width = data.sump + "%";
-                    }
-                } catch(e) {}
-            }
+        client.on('message', (topic, msg) => {
+            const data = JSON.parse(msg.toString());
+            if(data.h !== undefined) { document.getElementById('h-pct').innerText = data.h + "%"; document.getElementById('h-bar').style.width = data.h + "%"; }
+            if(data.k !== undefined) { document.getElementById('k-pct').innerText = data.k + "%"; document.getElementById('k-bar').style.width = data.k + "%"; }
         });
 
-        function sendPulse(motorName) {
-            client.publish(TOPIC_COMMANDS, motorName);
-            alert("Sent pulse command trigger to " + motorName + " motor!");
+        function pulse(motor) {
+            client.publish("varunshouse789/cmds", motor);
+            alert("Sent quick pulse trigger command to " + motor);
         }
     </script>
 </body>
