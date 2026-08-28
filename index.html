@@ -23,7 +23,7 @@
 </head>
 <body>
 
-    <div id="connBar" class="bar">📡 OFFLINE: INITIALIZING GLOBAL TUNNEL TRACKS...</div>
+    <div id="connBar" class="bar">📡 OFFLINE: OPENING DIRECT SECURITY BRIDGE...</div>
     <h2>GLOBAL WATER COMMAND STATION</h2>
     <p style="color: #64748b; font-size: 13px; margin-top: -8px; margin-bottom: 25px;">SECURE MONITORING OVER THE INTERNET</p>
 
@@ -58,10 +58,11 @@
     </div>
 
     <script>
-        // Use the unified secure WebSocket pipeline over HiveMQ's sandboxed SSL port 8004
-        const brokerUrl = "wss://://hivemq.com"; 
-        const client = mqtt.connect(brokerUrl, { 
-            clientId: "Web_Dashboard_Varun_" + Math.random().toString(16).substr(2, 6),
+        // FIXED WEB HANDSHAKE: Encrypted secure connection bridge utilizing clean authentication payloads [INDEX]
+        const client = mqtt.connect("wss://public.cloud.shiftr.io:443", {
+            clientId: "Web_Dashboard_" + Math.random().toString(16).substr(2, 4),
+            username: "water-station",
+            password: "Kxf68JkbfTYY7Ot9",
             keepalive: 60,
             clean: true
         });
@@ -75,7 +76,7 @@
 
         client.on('close', () => {
             const bar = document.getElementById('connBar');
-            bar.innerText = "🚨 DISCONNECTED: RESETTING SECURE NETWORK ROUTINES...";
+            bar.innerText = "🚨 DISCONNECTED: RESETTING NETWORK INTERFACES...";
             bar.className = "bar";
         });
 
