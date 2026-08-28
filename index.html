@@ -58,12 +58,10 @@
     </div>
 
     <script>
-        // FIXED WEB HANDSHAKE: Separated credentials out of the URL into the options payload structure [INDEX]
-        const brokerUrl = "wss://public.cloud.shiftr.io:443"; 
+        // Use the unified secure WebSocket pipeline over HiveMQ's sandboxed SSL port 8004
+        const brokerUrl = "wss://://hivemq.com"; 
         const client = mqtt.connect(brokerUrl, { 
             clientId: "Web_Dashboard_Varun_" + Math.random().toString(16).substr(2, 6),
-            username: "water-station",    // Shiftr Token Key
-            password: "Kxf68JkbfTYY7Ot9", // Shiftr Token Secret
             keepalive: 60,
             clean: true
         });
