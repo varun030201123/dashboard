@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Global Water Command Station</title>
-    <!-- Pulled via secure CDN to run WebSockets MQTT engine inside your browser -->
     <script src="https://cloudflare.com"></script>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #0b111e; color: #fff; margin: 0; padding: 15px; text-align: center; }
@@ -27,37 +26,32 @@
 </head>
 <body>
 
-    <!-- Connection state tracking header -->
     <div id="connBar" class="bar">📡 OFFLINE: LINKING TO BROKER FRAMEWORK...</div>
     <h2>GLOBAL WATER COMMAND STATION</h2>
     <p style="color: #64748b; font-size: 13px; margin-top: -8px; margin-bottom: 25px;">SECURE MONITORING SYSTEMS OVER THE INTERNET</p>
 
     <div class="grid">
-        <!-- HITACHI TANK VIEW -->
         <div class="card">
             <div class="title">Hitachi Overhead Tank</div>
             <div class="val" id="hitachiPct">--%</div>
             <div class="litres" id="hitachiLtrs">-- Litres</div>
-            <button onclick="sendAction('home/water/control/hitachi', 'START')">⚡ TRIGGER HITACHI PULSE</button>
+            <button onclick="sendAction('home/water/control/hitachi', 'START')">TRIGGER HITACHI PULSE</button>
         </div>
 
-        <!-- KAVERI TANK VIEW -->
         <div class="card">
             <div class="title">Kaveri Overhead Tank</div>
             <div class="val" id="kaveriPct">--%</div>
             <div class="litres" id="kaveriLtrs">-- Litres</div>
-            <button onclick="sendAction('home/water/control/kaveri', 'START')" style="background: #a855f7;">⚡ TRIGGER KAVERI PULSE</button>
+            <button onclick="sendAction('home/water/control/kaveri', 'START')" style="background: #a855f7;">TRIGGER KAVERI PULSE</button>
         </div>
 
-        <!-- UNDERGROUND SUMP VIEW -->
         <div class="card">
             <div class="title">Underground Sump Line</div>
             <div class="val sump-color" id="sumpPct">--%</div>
-            <div class="litres" id="sumpLtrs">-- Litres</div>
+            <div class="litres" id="sumoLtrs">-- Litres</div>
             <div style="font-size: 11px; color: #475569; margin-top: 25px;">3,420.39L Capacity Active</div>
         </div>
 
-        <!-- ZEBRONICS SMART PLUG LINK -->
         <div class="card">
             <div class="title">Zebronics Smart Plug</div>
             <div id="plugStateTag" class="status-tag">CHECKING STATE...</div>
@@ -67,26 +61,27 @@
     </div>
 
     <script>
-        // Use HiveMQ public WebSockets broker address to handle global data streams safely
+        // Force path mapping back to standard secure WebSocket tracking lines [INDEX]
         const brokerUrl = "wss://://hivemq.com";
-        const client = mqtt.connect(brokerUrl, { clientId: "Global_Station_" + Math.random().toString(16).substr(2, 8) });
+        const client = mqtt.connect(brokerUrl, { 
+            clientId: "Dashboard_Client_" + Math.random().toString(16).substr(2, 8),
+            keepalive: 60,
+            clean: true
+        });
 
         client.on('connect', () => {
             const bar = document.getElementById('connBar');
             bar.innerText = "🌐 GLOBAL LINK SECURED: LIVE TELEMETRY STREAMING ACTIVE";
             bar.className = "bar live";
-
-            // Listens directly to data published by your ESP32-C3 Mini gateway node
-            client.subscribe("home/water/status/#");
+            client.subscribe("home/water/status/#", { qos: 1 });
         });
 
         client.on('close', () => {
             const bar = document.getElementById('connBar');
-            bar.innerText = "🚨 DISCONNECTED: RUNNING BACKGROUND RECONNECT SCHEDULERS...";
+            bar.innerText = "🚨 DISCONNECTED FROM AIRWAVES: ATTEMPTING RECONNECT ROUTINES...";
             bar.className = "bar";
         });
 
-        // Parse incoming telemetry streams and map values onto the dashboard cards
         client.on('message', (topic, payload) => {
             const data = payload.toString();
             
@@ -95,7 +90,7 @@
             if (topic === "home/water/status/kaveri_pct") document.getElementById('kaveriPct').innerText = data + "%";
             if (topic === "home/water/status/kaveri_litres") document.getElementById('kaveriLtrs').innerText = data + " L";
             if (topic === "home/water/status/sump_pct") document.getElementById('sumpPct').innerText = data + "%";
-            if (topic === "home/water/status/sump_litres") document.getElementById('sumpLtrs').innerText = data + " L";
+            if (topic === "home/water/status/sump_litres") document.getElementById('sumoLtrs').innerText = data + " L";
             
             if (topic === "home/water/status/zebronics_state") {
                 const tag = document.getElementById('plugStateTag');
@@ -104,9 +99,9 @@
             }
         });
 
-        // Blasts commands back down to the ESP32-C3 gateway when buttons are clicked
+        // Blasts commands back down to the ESP32-C3 gateway when buttons are clicked [INDEX]
         function sendAction(topic, command) {
-            client.publish(topic, command, { qos: 1 });
+            client.publish(topic, command, { qos: 1, retain: false });
         }
     </script>
 </body>
