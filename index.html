@@ -61,10 +61,12 @@
     </div>
 
     <script>
-        // Force path mapping back to standard secure WebSocket tracking lines [INDEX]
-        const brokerUrl = "wss://://hivemq.com";
+        // Configured securely over Shiftr's web-sockets server maps port 443 [INDEX]
+        const brokerUrl = "wss://water-station.cloud.shiftr.io:443"; 
         const client = mqtt.connect(brokerUrl, { 
             clientId: "Dashboard_Client_" + Math.random().toString(16).substr(2, 8),
+            username: "water-station",    
+            password: "Kxf68JkbfTYY7Ot9", 
             keepalive: 60,
             clean: true
         });
@@ -99,7 +101,6 @@
             }
         });
 
-        // Blasts commands back down to the ESP32-C3 gateway when buttons are clicked [INDEX]
         function sendAction(topic, command) {
             client.publish(topic, command, { qos: 1, retain: false });
         }
