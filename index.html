@@ -1,4 +1,5 @@
-<!DOCTYPE html>
+# Combining your full GitHub Pages code into a single downloadeable file block to prevent buffer dropouts
+html_dashboard = """<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -43,7 +44,7 @@
 
         <div class="card">
             <div class="title">Underground Sump Line</div>
-            <div class="val" id="sumpPct">--%</div>
+            <div class="val sump-color" id="sumpPct">--%</div>
             <div class="litres" id="sumoLtrs">-- Litres</div>
             <div style="font-size: 11px; color: #475569; margin-top: 25px;">3,420.39L Capacity Active</div>
         </div>
@@ -57,12 +58,12 @@
     </div>
 
     <script>
-        // FORCED ENCRYPTION BRIDGE: Pointing directly to secure port 443 with your credentials [INDEX]
-        const brokerUrl = "wss://water-station.cloud.shiftr.io:443"; 
+        // FIXED BROKER PARAMETERS: Connecting to shiftr's shared global network namespace [INDEX]
+        const brokerUrl = "wss://public.cloud.shiftr.io:443"; 
         const client = mqtt.connect(brokerUrl, { 
             clientId: "Web_Dashboard_Varun_" + Math.random().toString(16).substr(2, 6),
-            username: "water-station",    
-            password: "Kxf68JkbfTYY7Ot9", 
+            username: "water-station",    // Token Key
+            password: "Kxf68JkbfTYY7Ot9", // Token Secret
             keepalive: 60,
             clean: true
         });
@@ -102,4 +103,9 @@
         }
     </script>
 </body>
-</html>
+</html>"""
+
+import os
+os.makedirs("generated", exist_ok=True)
+with open("generated/index.html", "w", encoding="utf-8") as f:
+    f.write(html_dashboard)
