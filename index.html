@@ -7,13 +7,14 @@
     <script src="https://cloudflare.com"></script>
     <style>
         body { font-family: sans-serif; background: #0b111e; color: #fff; text-align: center; padding: 15px; margin: 0; }
-        .bar { padding: 12px; font-size: 13px; font-weight: bold; letter-spacing: 1px; border-radius: 6px; margin-bottom: 15px; background: #ef4444; }
+        .bar { padding: 12px; font-size: 13px; font-weight: bold; letter-spacing: 1px; border-radius: 6px; margin-bottom: 15px; background: #ef4444; transition: 0.3s; }
         .live { background: #10b981; box-shadow: 0 3px 12px rgba(16,185,129,0.3); }
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; max-width: 1000px; margin: 0 auto; }
         .card { background: #172237; border: 1px solid #26354a; border-radius: 12px; padding: 20px; }
         .title { color: #8a99ad; font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; }
         .val { font-size: 36px; font-weight: bold; color: #3b82f6; }
         .litres { font-size: 14px; color: #64748b; margin-top: 4px; }
+        .sump-color { color: #10b981; }
         button { width: 100%; padding: 14px; margin-top: 15px; background: #3b82f6; color: #fff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
         .btn-off { background: #ef4444; margin-top: 8px; }
         .status-tag { display: inline-block; padding: 4px 10px; font-size: 11px; font-weight: bold; border-radius: 20px; margin-top: 8px; background: #334155; }
@@ -57,11 +58,12 @@
     </div>
 
     <script>
+        // FIXED WEB HANDSHAKE: Separated credentials out of the URL into the options payload structure [INDEX]
         const brokerUrl = "wss://public.cloud.shiftr.io:443"; 
         const client = mqtt.connect(brokerUrl, { 
             clientId: "Web_Dashboard_Varun_" + Math.random().toString(16).substr(2, 6),
-            username: "water-station",    
-            password: "Kxf68JkbfTYY7Ot9", 
+            username: "water-station",    // Shiftr Token Key
+            password: "Kxf68JkbfTYY7Ot9", // Shiftr Token Secret
             keepalive: 60,
             clean: true
         });
@@ -96,7 +98,6 @@
             }
         });
 
-        // Blasts actions back through the global cloud broker channels cleanly
         function sendAction(topic, command) {
             client.publish(topic, command, { qos: 1, retain: false });
         }
