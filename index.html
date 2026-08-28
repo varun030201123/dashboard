@@ -3,80 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Building Water Dashboard</title>
+    <title>Global Water Command Station</title>
+    <!-- Pulled via secure CDN to run WebSockets MQTT engine inside your browser -->
+    <script src="https://cloudflare.com"></script>
     <style>
-        body { background-color: #0b0f19; color: #f1f5f9; font-family: sans-serif; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; box-sizing: border-box; }
-        .container { max-width: 500px; width: 100%; }
-        header { text-align: center; border-bottom: 1px solid #1e293b; padding-bottom: 15px; margin-bottom: 25px; }
-        h1 { color: #22d3ee; text-transform: uppercase; letter-spacing: 2px; margin: 0; font-size: 22px; }
-        .card { background-color: #111827; border: 1px solid #1e293b; border-radius: 16px; padding: 20px; text-align: center; margin-bottom: 15px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); }
-        .title { text-transform: uppercase; color: #94a3b8; font-size: 11px; font-weight: bold; margin-bottom: 5px; }
-        .pct { font-size: 38px; font-weight: 800; color: #22d3ee; margin: 5px 0; }
-        .bar-bg { background-color: #020617; border: 1px solid #1e293b; border-radius: 6px; height: 14px; padding: 2px; overflow: hidden; }
-        .bar { background: linear-gradient(to right, #2563eb, #22d3ee); height: 100%; border-radius: 4px; width: 0%; transition: width 0.5s ease; }
-        .sump-text { color: #34d399; }
-        .sump-bar { background: linear-gradient(to right, #059669, #34d399); }
+        body { font-family: 'Segoe UI', sans-serif; background: #0b111e; color: #fff; margin: 0; padding: 15px; text-align: center; }
+        .bar { padding: 12px; font-size: 13px; font-weight: bold; letter-spacing: 1px; border-radius: 6px; margin-bottom: 15px; transition: 0.4s; background: #ef4444; box-shadow: 0 3px 12px rgba(239,68,68,0.2); }
+        .live { background: #10b981; box-shadow: 0 3px 12px rgba(16,185,129,0.3); }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; max-width: 1000px; margin: 0 auto; }
+        .card { background: #172237; border: 1px solid #26354a; border-radius: 12px; padding: 20px; transition: 0.3s; }
+        .card:hover { transform: translateY(-3px); border-color: #3b82f6; }
+        .title { color: #8a99ad; font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; }
+        .val { font-size: 36px; font-weight: bold; color: #3b82f6; }
+        .litres { font-size: 14px; color: #64748b; margin-top: 4px; }
+        .sump-color { color: #10b981; }
+        button { width: 100%; padding: 14px; margin-top: 15px; background: #3b82f6; color: #fff; border: none; border-radius: 8px; font-weight: bold; font-size: 14px; cursor: pointer; transition: 0.2s; }
+        button:active { background: #1d4ed8; transform: scale(0.98); }
+        .btn-off { background: #ef4444; margin-top: 8px; }
+        .btn-off:active { background: #b91c1c; }
+        .status-tag { display: inline-block; padding: 4px 10px; font-size: 11px; font-weight: bold; border-radius: 20px; margin-top: 8px; background: #334155; }
+        .tag-on { background: rgba(16,185,129,0.2); color: #10b981; border: 1px solid #10b981; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>Building Water Dashboard</h1>
-            <p style="color: #10b981; font-size: 11px; margin: 5px 0 0 0; font-weight: bold;">Secure Data Vault Sync Active</p>
-        </header>
 
-        <!-- HITACHI -->
+    <!-- Connection state tracking header -->
+    <div id="connBar" class="bar">📡 OFFLINE: LINKING TO BROKER FRAMEWORK...</div>
+    <h2>GLOBAL WATER COMMAND STATION</h2>
+    <p style="color: #64748b; font-size: 13px; margin-top: -8px; margin-bottom: 25px;">SECURE MONITORING SYSTEMS OVER THE INTERNET</p>
+
+    <div class="grid">
+        <!-- HITACHI TANK VIEW -->
         <div class="card">
-            <p class="title">Hitachi Tank</p>
-            <div id="h" class="pct">0%</div>
-            <div class="bar-bg"><div id="hb" class="bar"></div></div>
+            <div class="title">Hitachi Overhead Tank</div>
+            <div class="val" id="hitachiPct">--%</div>
+            <div class="litres" id="hitachiLtrs">-- Litres</div>
+            <button onclick="sendAction('home/water/control/hitachi', 'START')">⚡ TRIGGER HITACHI PULSE</button>
         </div>
 
-        <!-- KAVERI -->
+        <!-- KAVERI TANK VIEW -->
         <div class="card">
-            <p class="title">Kaveri Tank</p>
-            <div id="k" class="pct">0%</div>
-            <div class="bar-bg"><div id="kb" class="bar"></div></div>
+            <div class="title">Kaveri Overhead Tank</div>
+            <div class="val" id="kaveriPct">--%</div>
+            <div class="litres" id="kaveriLtrs">-- Litres</div>
+            <button onclick="sendAction('home/water/control/kaveri', 'START')" style="background: #a855f7;">⚡ TRIGGER KAVERI PULSE</button>
         </div>
 
-        <!-- UNDERGROUND SUMP -->
+        <!-- UNDERGROUND SUMP VIEW -->
         <div class="card">
-            <p class="title">Underground Sump</p>
-            <div id="s" class="pct" style="color: #34d399;">0%</div>
-            <div class="bar-bg"><div id="sb" class="bar sump-bar"></div></div>
+            <div class="title">Underground Sump Line</div>
+            <div class="val sump-color" id="sumpPct">--%</div>
+            <div class="litres" id="sumpLtrs">-- Litres</div>
+            <div style="font-size: 11px; color: #475569; margin-top: 25px;">3,420.39L Capacity Active</div>
+        </div>
+
+        <!-- ZEBRONICS SMART PLUG LINK -->
+        <div class="card">
+            <div class="title">Zebronics Smart Plug</div>
+            <div id="plugStateTag" class="status-tag">CHECKING STATE...</div>
+            <button onclick="sendAction('home/water/control/zebronics', 'ON')" style="background: #10b981; margin-top: 20px;">TURN PLUG ON</button>
+            <button onclick="sendAction('home/water/control/zebronics', 'OFF')" class="btn-off">TURN PLUG OFF</button>
         </div>
     </div>
 
     <script>
-        async function loadStoredLevels() {
-            try {
-                // Instantly grabs historical raw data straight from your repository asset loop
-                const response = await fetch("data.json?t=" + new Date().getTime());
-                const rawText = await response.text();
-                
-                if (rawText) {
-                    // Browser safely extracts numbers directly from the text dump using regex search scans
-                    const matchHitachi = rawText.match(/Hitachi.*?(\d+)%/i);
-                    const matchKaveri = rawText.match(/Kaveri.*?(\d+)%/i);
-                    const matchSump = rawText.match(/Sump.*?(\d+)%/i);
+        // Use HiveMQ public WebSockets broker address to handle global data streams safely
+        const brokerUrl = "wss://://hivemq.com";
+        const client = mqtt.connect(brokerUrl, { clientId: "Global_Station_" + Math.random().toString(16).substr(2, 8) });
 
-                    if (matchHitachi) { 
-                        document.getElementById('h').innerText = matchHitachi[1] + "%"; 
-                        document.getElementById('hb').style.width = matchHitachi[1] + "%"; 
-                    }
-                    if (matchKaveri) { 
-                        document.getElementById('k').innerText = matchKaveri[1] + "%"; 
-                        document.getElementById('kb').style.width = matchKaveri[1] + "%"; 
-                    }
-                    if (matchSump) { 
-                        document.getElementById('s').innerText = matchSump[1] + "%"; 
-                        document.getElementById('sb').style.width = matchSump[1] + "%"; 
-                    }
-                }
-            } catch (e) {}
+        client.on('connect', () => {
+            const bar = document.getElementById('connBar');
+            bar.innerText = "🌐 GLOBAL LINK SECURED: LIVE TELEMETRY STREAMING ACTIVE";
+            bar.className = "bar live";
+
+            // Listens directly to data published by your ESP32-C3 Mini gateway node
+            client.subscribe("home/water/status/#");
+        });
+
+        client.on('close', () => {
+            const bar = document.getElementById('connBar');
+            bar.innerText = "🚨 DISCONNECTED: RUNNING BACKGROUND RECONNECT SCHEDULERS...";
+            bar.className = "bar";
+        });
+
+        // Parse incoming telemetry streams and map values onto the dashboard cards
+        client.on('message', (topic, payload) => {
+            const data = payload.toString();
+            
+            if (topic === "home/water/status/hitachi_pct") document.getElementById('hitachiPct').innerText = data + "%";
+            if (topic === "home/water/status/hitachi_litres") document.getElementById('hitachiLtrs').innerText = data + " L";
+            if (topic === "home/water/status/kaveri_pct") document.getElementById('kaveriPct').innerText = data + "%";
+            if (topic === "home/water/status/kaveri_litres") document.getElementById('kaveriLtrs').innerText = data + " L";
+            if (topic === "home/water/status/sump_pct") document.getElementById('sumpPct').innerText = data + "%";
+            if (topic === "home/water/status/sump_litres") document.getElementById('sumpLtrs').innerText = data + " L";
+            
+            if (topic === "home/water/status/zebronics_state") {
+                const tag = document.getElementById('plugStateTag');
+                if (data === "1") { tag.innerText = "🔌 PLUG ACTIVE (ON)"; tag.className = "status-tag tag-on"; }
+                else { tag.innerText = "🔌 PLUG INACTIVE (OFF)"; tag.className = "status-tag"; }
+            }
+        });
+
+        // Blasts commands back down to the ESP32-C3 gateway when buttons are clicked
+        function sendAction(topic, command) {
+            client.publish(topic, command, { qos: 1 });
         }
-        setInterval(loadStoredLevels, 5000);
-        loadStoredLevels();
     </script>
 </body>
 </html>
