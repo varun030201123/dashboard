@@ -1,97 +1,88 @@
-// =========================================================================
-// 3. SECURE TWO-WAY DATA MANAGEMENT ENGINE
-// =========================================================================
-void pushToFirebase() {
-  if (WiFi.status() == WL_CONNECTED) {
-    HTTPClient http;
-    WiFiClientSecure fbSecureClient;
-    fbSecureClient.setInsecure(); // Overrides heavy SSL computations to protect memory heap
-    
-    String url = String(firebase_url) + "live.json";
-    http.begin(fbSecureClient, url);
-    http.addHeader("Content-Type", "application/json");
-    
-    String body = "{\"hitachi\":" + String(incomingTelemetry.hitachiPct) + 
-                  ",\"hitachiL\":" + String(incomingTelemetry.hitachiLitres) +
-                  ",\"kaveri\":" + String(incomingTelemetry.kaveriPct) + 
-                  ",\"kaveriL\":" + String(incomingTelemetry.kaveriLitres) +
-                  ",\"sump\":" + String(incomingTelemetry.sumpPct) + 
-                  ",\"sumpL\":" + String(incomingTelemetry.sumpLitres) + "}";
-                  
-    http.PUT(body); 
-    http.end();
-  }
-}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Global Water Portal</title>
+  <style>
+    body { font-family: sans-serif; background: #0f172a; color: #f8fafc; text-align: center; padding: 20px; }
+    .card { background: #1e293b; padding: 20px; margin: 15px auto; border-radius: 12px; max-width: 340px; border: 1px solid #334155; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+    h3 { margin: 0; color: #94a3b8; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .val { font-size: 40px; font-weight: bold; color: #38bdf8; margin: 10px 0; }
+    .litres { font-size: 16px; color: #cbd5e1; margin-bottom: 15px; }
+    .btn { background: #3b82f6; color: #fff; border: none; padding: 12px; width: 100%; font-size: 15px; font-weight: bold; border-radius: 10px; cursor: pointer; transition: 0.2s; }
+    .btn:hover { background: #2563eb; }
+    .btn-kaveri { background: #ef4444; }
+    .btn-kaveri:hover { background: #dc2626; }
+    .status { font-size: 11px; color: #64748b; margin-top: 15px; }
+  </style>
+  <script src="https://gstatic.com"></script>
+  <script src="https://gstatic.com"></script>
+</head>
+<body>
+  <h2>GLOBAL WATER PORTAL</h2>
+  
+  <div class="card">
+    <h3>Hitachi Tank</h3>
+    <div id="h_pct" class="val">--%</div>
+    <div id="h_lit" class="litres">-- L</div>
+    <button class="btn" onclick="triggerHardware('hitachi')">START HITACHI PUMP</button>
+  </div>
+  
+  <div class="card">
+    <h3>Kaveri Tank</h3>
+    <div id="k_pct" class="val" style="color:#ef4444">--%</div>
+    <div id="k_lit" class="litres">-- L</div>
+    <button class="btn btn-kaveri" onclick="triggerHardware('kaveri')">START KAVERI PUMP</button>
+  </div>
+  
+  <div class="card">
+    <h3>Underground Sump</h3>
+    <div id="s_pct" class="val" style="color:#10b981">--%</div>
+    <div id="s_lit" class="litres">-- L</div>
+  </div>
+  
+  <div id="ts" class="status">Connecting to storage channel...</div>
 
-void checkFirebaseControls() {
-  if (WiFi.status() == WL_CONNECTED && (millis() - lastFirebaseControlCheck > 1000)) {
-    lastFirebaseControlCheck = millis();
-    HTTPClient http;
-    WiFiClientSecure fbSecureClient;
-    fbSecureClient.setInsecure();
+  <script>
+    const firebaseConfig = {
+      databaseURL: "https://firebaseio.com"
+    };
     
-    String url = String(firebase_url) + "control.json";
-    http.begin(fbSecureClient, url);
-    int httpCode = http.GET();
-    
-    if (httpCode == 200) {
-      String payload = http.getString();
-      StaticJsonDocument<128> doc;
-      deserializeJson(doc, payload);
-      
-      int hitachiCmd = doc["cmd_hitachi"] | 0;
-      int kaveriCmd  = doc["cmd_kaveri"]  | 0;
-      
-      if (hitachiCmd == 1) {
-        Serial.println("✓ Firebase Web Trigger: Executing Hitachi Pump Relay Pulse!");
-        digitalWrite(RELAY_HITACHI_PIN, HIGH);
-        delay(1000); // 1 second hardware pulse time
-        digitalWrite(RELAY_HITACHI_PIN, LOW);
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
+    database.ref("live").on("value", (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        document.getElementById('h_pct').innerText = (data.hitachi !== undefined ? data.hitachi : "--") + '%';
+        document.getElementById('h_lit').innerText = (data.hitachiL !== undefined ? data.hitachiL : "--") + ' L';
+        document.getElementById('k_pct').innerText = (data.kaveri !== undefined ? data.kaveri : "--") + '%';
+        document.getElementById('k_lit').innerText = (data.kaveriL !== undefined ? data.kaveriL : "--") + ' L';
+        document.getElementById('s_pct').innerText = (data.sump !== undefined ? data.sump : "--") + '%';
+        document.getElementById('s_lit').innerText = (data.sumpL !== undefined ? data.sumpL : "--") + ' L';
         
-        http.PUT("{\"cmd_hitachi\":0,\"cmd_kaveri\":0}"); // Reset trigger switches back to 0
+        document.getElementById('ts').innerText = "Live Telemetry Sync Active • " + new Date().toLocaleTimeString();
       }
-      else if (kaveriCmd == 1) {
-        Serial.println("✓ Firebase Web Trigger: Executing Kaveri Pump Relay Pulse!");
-        digitalWrite(RELAY_KAVERI_PIN, HIGH);
-        delay(1000); // 1 second hardware pulse time
-        digitalWrite(RELAY_KAVERI_PIN, LOW);
+    }, (error) => {
+      document.getElementById('ts').innerText = "Connecting to Google Firebase servers...";
+    });
+
+    function triggerHardware(pumpType) {
+      try {
+        let h_val = (pumpType === 'hitachi') ? 1 : 0;
+        let k_val = (pumpType === 'kaveri')  ? 1 : 0;
         
-        http.PUT("{\"cmd_hitachi\":0,\"cmd_kaveri\":0}"); // Reset trigger switches back to 0
+        database.ref("control").set({
+          cmd_hitachi: h_val,
+          cmd_kaveri: k_val
+        });
+
+        alert("🚀 Pump command dispatched successfully!");
+      } catch(e) {
+        alert("Transmission processing failure.");
       }
     }
-    http.end();
-  }
-}
-
-// =========================================================================
-// 4. HARDWARE RUNTIME SETUP & INITIALIZATION
-// =========================================================================
-void setup() {
-  Serial.begin(115200);
-  delay(500);
-  
-  pinMode(RELAY_HITACHI_PIN, OUTPUT);
-  pinMode(RELAY_KAVERI_PIN, OUTPUT);
-  digitalWrite(RELAY_HITACHI_PIN, LOW);
-  digitalWrite(RELAY_KAVERI_PIN, LOW);
-  
-  WiFi.mode(WIFI_AP_STA);
-  esp_wifi_set_ps(WIFI_PS_NONE); // Sets network radio card performance to peak threshold
-  
-  WiFi.begin(wifi_ssid, wifi_password);
-  while (WiFi.status() != WL_CONNECTED) { delay(500); Serial.print("."); }
-  Serial.println("\nSystem Core Successfully Online & Synced to Cloud Ecosystem!");
-  
-  if (esp_now_init() == 0) { 
-    esp_now_register_recv_cb(onEspNowRecv); 
-  }
-}
-
-void loop() {
-  checkFirebaseControls(); // Checks for webpage button clicks every 1 second
-
-  if (millis() - lastCloudPush > cloudInterval) {
-    pushToFirebase(); // Updates your dashboard water levels every 4 seconds
-    lastCloudPush = millis();
-  }
-}
+  </script>
+</body>
+</html>
