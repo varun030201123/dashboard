@@ -16,9 +16,7 @@
     .status { font-size: 11px; color: #64748b; margin-top: 15px; }
   </style>
   <script>
-    const BOT_TOKEN = "8869292582:AAFXHhmp_kf1Irg8suhlQJj_b2OSJMQ_dvY";
-    const CHAT_ID = "616335359"; 
-    const FIREBASE_URL = "https://water-level-indicator-f6a44-default-rtdb.firebaseio.com/";
+    const FIREBASE_URL = "https://firebaseio.com";
 
     async function getLatestMetrics() {
       try {
@@ -40,13 +38,26 @@
       }
     }
 
-    async function triggerHardware(command) {
+    async function triggerHardware(pumpType) {
       try {
-        let url = `https://telegram.org{BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${command}`;
-        await fetch(url, { mode: 'no-cors' }); 
-        alert("Command sent successfully to your home hardware panel!");
+        let h_val = (pumpType === 'hitachi') ? 1 : 0;
+        let k_val = (pumpType === 'kaveri') ? 1 : 0;
+        
+        let payload = { "cmd_hitachi": h_val, "cmd_kaveri": k_val };
+        
+        let res = await fetch(FIREBASE_URL + "control.json", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        
+        if(res.ok) {
+          alert("🚀 Pump command dispatched successfully!");
+        } else {
+          throw new Error();
+        }
       } catch(e) {
-        alert("Transmission failure.");
+        alert("Transmission processing failure. Check database rules.");
       }
     }
 
@@ -61,14 +72,14 @@
     <h3>Hitachi Tank</h3>
     <div id="h_pct" class="val">--%</div>
     <div id="h_lit" class="litres">-- L</div>
-    <button class="btn" onclick="triggerHardware('/pulse_hitachi')">START HITACHI PUMP</button>
+    <button class="btn" onclick="triggerHardware('hitachi')">START HITACHI PUMP</button>
   </div>
   
   <div class="card">
     <h3>Kaveri Tank</h3>
     <div id="k_pct" class="val" style="color:#ef4444">--%</div>
     <div id="k_lit" class="litres">-- L</div>
-    <button class="btn btn-kaveri" onclick="triggerHardware('/pulse_kaveri')">START KAVERI PUMP</button>
+    <button class="btn btn-kaveri" onclick="triggerHardware('kaveri')">START KAVERI PUMP</button>
   </div>
   
   <div class="card">
