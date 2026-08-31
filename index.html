@@ -24,33 +24,32 @@
         let res = await fetch(`https://telegram.org{BOT_TOKEN}/getUpdates?offset=-1`);
         let data = await res.json();
         
-        if (data.ok && data.result.length > 0) {
-          let latestUpdate = data.result[0];
+        if (data.ok && data.result && data.result.length > 0) {
+          let latestUpdate = data.result[0]; 
           let msgObj = latestUpdate.message || latestUpdate.edited_message || latestUpdate.channel_post;
           if (!msgObj || !msgObj.text) return;
           
           let text = msgObj.text;
 
-          // Regular expressions to scan your Telegram card layout text strings
-          let h_pct = text.match(/Hitachi Tank:\s*(\d+)%/);
+          // Advanced text scrapers that cleanly extract numeric groupings
+          let h_pct = text.match(/Hitachi Tank:\s*(\d+)/);
           let h_lit = text.match(/Hitachi Tank:.*\((\d+)\s*L\)/);
-          let k_pct = text.match(/Kaveri Tank:\s*(\d+)%/);
+          let k_pct = text.match(/Kaveri Tank:\s*(\d+)/);
           let k_lit = text.match(/Kaveri Tank:.*\((\d+)\s*L\)/);
-          let s_pct = text.match(/Underground Sump:\s*(\d+)%/);
+          let s_pct = text.match(/Underground Sump:\s*(\d+)/);
           let s_lit = text.match(/Underground Sump:.*\((\d+)\s*L\)/);
 
-          // FIXED: Adding [1] cleanly extracts only the target digit grouping matching the criteria
-          if (h_pct && h_pct[1]) document.getElementById('h_pct').innerText = h_pct[1] + '%';
-          if (h_lit && h_lit[1]) document.getElementById('h_lit').innerText = h_lit[1] + ' L';
-          if (k_pct && k_pct[1]) document.getElementById('k_pct').innerText = k_pct[1] + '%';
-          if (k_lit && k_lit[1]) document.getElementById('k_lit').innerText = k_lit[1] + ' L';
-          if (s_pct && s_pct[1]) document.getElementById('s_pct').innerText = s_pct[1] + '%';
-          if (s_lit && s_lit[1]) document.getElementById('s_lit').innerText = s_lit[1] + ' L';
+          if (h_pct) document.getElementById('h_pct').innerText = h_pct[1] + '%';
+          if (h_lit) document.getElementById('h_lit').innerText = h_lit[1] + ' L';
+          if (k_pct) document.getElementById('k_pct').innerText = k_pct[1] + '%';
+          if (k_lit) document.getElementById('k_lit').innerText = k_lit[1] + ' L';
+          if (s_pct) document.getElementById('s_pct').innerText = s_pct[1] + '%';
+          if (s_lit) document.getElementById('s_lit').innerText = s_lit[1] + ' L';
           
           document.getElementById('ts').innerText = "Live Telemetry Sync Active • " + new Date().toLocaleTimeString();
         }
       } catch(e) {
-        document.getElementById('ts').innerText = "Sync delayed. Scanning bot communication feeds...";
+        document.getElementById('ts').innerText = "Sync delayed. Tracking system channel logs...";
       }
     }
 
@@ -58,7 +57,7 @@
       try {
         let url = `https://telegram.org{BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${command}`;
         await fetch(url);
-        alert("Command sent successfully to your hardware bot room!");
+        alert("Command routed successfully to your home hardware panel!");
       } catch(e) {
         alert("Transmission failure.");
       }
