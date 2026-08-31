@@ -1,6 +1,7 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Global Water Portal</title>
   <style>
@@ -49,16 +50,16 @@
     firebase.initializeApp({ databaseURL: FIREBASE_URL });
     const database = firebase.database();
 
-    // FIXED PATH TARGET: Points exactly inside the deep live/data node tree structure
-    database.ref("live/data").on("value", (snapshot) => {
+    // FIXED READ ROUTE: Pulls data points straight from the updated global/live branch
+    database.ref("global/live").on("value", (snapshot) => {
       const data = snapshot.val();
       if (data) {
-        document.getElementById('h_pct').innerText = (data.hitachi !== undefined ? data.hitachi : "0") + '%';
-        document.getElementById('h_lit').innerText = (data.hitachiL !== undefined ? data.hitachiL : "0") + ' L';
-        document.getElementById('k_pct').innerText = (data.kaveri !== undefined ? data.kaveri : "0") + '%';
-        document.getElementById('k_lit').innerText = (data.kaveriL !== undefined ? data.kaveriL : "0") + ' L';
-        document.getElementById('s_pct').innerText = (data.sump !== undefined ? data.sump : "0") + '%';
-        document.getElementById('s_lit').innerText = (data.sumpL !== undefined ? data.sumpL : "0") + ' L';
+        document.getElementById('h_pct').innerText = (data.hitachi !== undefined ? data.hitachi : "--") + '%';
+        document.getElementById('h_lit').innerText = (data.hitachiL !== undefined ? data.hitachiL : "--") + ' L';
+        document.getElementById('k_pct').innerText = (data.kaveri !== undefined ? data.kaveri : "--") + '%';
+        document.getElementById('k_lit').innerText = (data.kaveriL !== undefined ? data.kaveriL : "--") + ' L';
+        document.getElementById('s_pct').innerText = (data.sump !== undefined ? data.sump : "--") + '%';
+        document.getElementById('s_lit').innerText = (data.sumpL !== undefined ? data.sumpL : "--") + ' L';
         
         document.getElementById('ts').innerText = "Live Telemetry Sync Active • " + new Date().toLocaleTimeString();
       }
@@ -71,7 +72,7 @@
         let h_val = (pumpType === 'hitachi') ? 1 : 0;
         let k_val = (pumpType === 'kaveri')  ? 1 : 0;
         
-        database.ref("control").set({
+        database.ref("global/control").set({
           cmd_hitachi: h_val,
           cmd_kaveri: k_val
         });
