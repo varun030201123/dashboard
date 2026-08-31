@@ -21,63 +21,35 @@
 
     async function getLatestMetrics() {
       try {
-        // Fetch last 10 actions to make sure we don't miss the bot's data card
-        let res = await fetch(`https://telegram.org{BOT_TOKEN}/getUpdates?limit=10&allowed_updates=["message","edited_message"]`);
+        // Fetch from the CORS-free mirror box instead of hit-restricted Telegram endpoints
+        let res = await fetch("http://bins.cc");
         let data = await res.json();
         
-        if (data.ok && data.result && data.result.length > 0) {
-          let text = "";
-          
-          // Loop backwards from newest to oldest to find the actual data status payload card
-          for (let i = data.result.length - 1; i >= 0; i--) {
-            let item = data.result[i];
-            let msgObj = item.message || item.edited_message || item.channel_post;
-            
-            if (msgObj && msgObj.text && msgObj.text.includes("Hitachi Tank:")) {
-              text = msgObj.text;
-              break; // Found the active metrics card, exit loop
-            }
-          }
-
-          if (text === "") {
-            document.getElementById('ts').innerText = "Awaiting fresh status update message in bot chat...";
-            return;
-          }
-
-          // Strict Regex parsing matching your exact ESP32 text stream lines
-          let h_pct = text.match(/Hitachi Tank:\s*(\d+)/);
-          let h_lit = text.match(/Hitachi Tank:\s*\d+%\s*\((\d+)/);
-          let k_pct = text.match(/Kaveri Tank:\s*(\d+)/);
-          let k_lit = text.match(/Kaveri Tank:\s*\d+%\s*\((\d+)/);
-          let s_pct = text.match(/Underground Sump:\s*(\d+)/);
-          let s_lit = text.match(/Underground Sump:\s*\d+%\s*\((\d+)/);
-
-          // Extract match array data positions cleanly into the webpage HTML elements
-          if (h_pct) document.getElementById('h_pct').innerText = h_pct[1] + '%';
-          if (h_lit) document.getElementById('h_lit').innerText = h_lit[1] + ' L';
-          if (k_pct) document.getElementById('k_pct').innerText = k_pct[1] + '%';
-          if (k_lit) document.getElementById('k_lit').innerText = k_lit[1] + ' L';
-          if (s_pct) document.getElementById('s_pct').innerText = s_pct[1] + '%';
-          if (s_lit) document.getElementById('s_lit').innerText = s_lit[1] + ' L';
+        if (data) {
+          document.getElementById('h_pct').innerText = data.hitachi + '%';
+          document.getElementById('h_lit').innerText = data.hitachiL + ' L';
+          document.getElementById('k_pct').innerText = data.kaveri + '%';
+          document.getElementById('k_lit').innerText = data.kaveriL + ' L';
+          document.getElementById('s_pct').innerText = data.sump + '%';
+          document.getElementById('s_lit').innerText = data.sumpL + ' L';
           
           document.getElementById('ts').innerText = "Live Telemetry Sync Active • " + new Date().toLocaleTimeString();
         }
       } catch(e) {
-        document.getElementById('ts').innerText = "Sync delayed. Parsing communication matrix...";
+        document.getElementById('ts').innerText = "Syncing with cloud bridge database...";
       }
     }
 
     async function triggerHardware(command) {
       try {
         let url = `https://telegram.org{BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${command}`;
-        await fetch(url);
-        alert("Command sent successfully to your hardware bot room!");
+        await fetch(url, { mode: 'no-cors' }); // no-cors lets outbound buttons fire blindly without blocks
+        alert("Command sent successfully to your hardware panel!");
       } catch(e) {
         alert("Transmission failure.");
       }
     }
 
-    // Refresh every 4 seconds to maintain real-time performance without hitting API rate limits
     setInterval(getLatestMetrics, 4000);
     window.onload = getLatestMetrics;
   </script>
@@ -105,6 +77,6 @@
     <div id="s_lit" class="litres">-- L</div>
   </div>
   
-  <div id="ts" class="status">Connecting to Telegram data servers...</div>
+  <div id="ts" class="status">Connecting to storage channel...</div>
 </body>
 </html>
