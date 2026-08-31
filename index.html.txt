@@ -1,0 +1,25 @@
+<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Global Panel</title><style>
+body{font-family:sans-serif;background:#0f172a;color:#f8fafc;text-align:center;padding:20px;}
+.card{background:#1e293b;padding:20px;margin:15px auto;border-radius:12px;max-width:340px;border:1px solid #334155;}
+.val{font-size:40px;font-weight:bold;color:#38bdf8;}
+</style><script>
+async function updateMetrics() {
+  try {
+    let res = await fetch('https://kvdb.io');
+    let data = await res.json();
+    document.getElementById('h_pct').innerText = data.hitachi + '%';
+    document.getElementById('h_lit').innerText = data.hitachiL + ' L';
+    document.getElementById('k_pct').innerText = data.kaveri + '%';
+    document.getElementById('k_lit').innerText = data.kaveriL + ' L';
+    document.getElementById('s_pct').innerText = data.sump + '%';
+    document.getElementById('s_lit').innerText = data.sumpL + ' L';
+  } catch(e) {}
+}
+setInterval(updateMetrics, 5000); window.onload = updateMetrics;
+</script></head><body>
+<h2>GLOBAL MONITOR DASHBOARD</h2>
+<div class="card"><h3>Hitachi Tank</h3><div id="h_pct" class="val">--%</div><div id="h_lit">-- L</div></div>
+<div class="card"><h3>Kaveri Tank</h3><div id="k_pct" class="val" style="color:#ef4444">--%</div><div id="k_lit">-- L</div></div>
+<div class="card"><h3>Underground Sump</h3><div id="s_pct" class="val" style="color:#10b981">--%</div><div id="s_lit">-- L</div></div>
+</body></html>
