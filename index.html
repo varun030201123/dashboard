@@ -53,11 +53,12 @@
         
         if(res.ok) {
           alert("🚀 Pump command dispatched successfully!");
+          getLatestMetrics(); // Force an immediate refresh after clicking
         } else {
           throw new Error();
         }
       } catch(e) {
-        alert("Transmission processing failure. Check database rules.");
+        alert("Transmission processing failure. Verify Firebase rules configuration.");
       }
     }
 
