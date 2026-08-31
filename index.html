@@ -8,6 +8,7 @@
     .card { background: #1e293b; padding: 20px; margin: 15px auto; border-radius: 12px; max-width: 340px; border: 1px solid #334155; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
     h3 { margin: 0; color: #94a3b8; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; }
     .val { font-size: 40px; font-weight: bold; color: #38bdf8; margin: 10px 0; }
+    .litres { font-size: 16px; color: #cbd5e1; margin-bottom: 15px; }
     .btn { background: #3b82f6; color: #fff; border: none; padding: 12px; width: 100%; font-size: 15px; font-weight: bold; border-radius: 10px; cursor: pointer; transition: 0.2s; }
     .btn:hover { background: #2563eb; }
     .btn-kaveri { background: #ef4444; }
@@ -17,42 +18,25 @@
   <script>
     const BOT_TOKEN = "8869292582:AAFXHhmp_kf1Irg8suhlQJj_b2OSJMQ_dvY";
     const CHAT_ID = "616335359"; 
+    const FIREBASE_URL = "https://water-level-indicator-f6a44-default-rtdb.firebaseio.com/";
 
     async function getLatestMetrics() {
       try {
-        let res = await fetch(`https://telegram.org{BOT_TOKEN}/getUpdates?offset=-1`);
+        let res = await fetch(FIREBASE_URL + "live.json");
         let data = await res.json();
         
-        if (data.ok && data.result && data.result.length > 0) {
-          let latestUpdate = data.result[0]; 
-          let msgObj = latestUpdate.message || latestUpdate.edited_message || latestUpdate.channel_post;
-          if (!msgObj || !msgObj.text) return;
-          
-          let text = msgObj.text;
-
-          // Advanced extraction patterns parse numbers inside capture brackets safely
-          let h_data = text.match(/Hitachi:\s*(\d+)%\s*\((\d+)\s*L\)/);
-          let k_data = text.match(/Kaveri:\s*(\d+)%\s*\((\d+)\s*L\)/);
-          let s_data = text.match(/Sump:\s*(\d+)%\s*\((\d+)\s*L\)/);
-
-          // FIXED: Adding [1] extracts the percentage group; [2] extracts the litres group
-          if (h_data && h_data[1] && h_data[2]) {
-            document.getElementById('h_pct').innerText = h_data[1] + '%';
-            document.getElementById('h_lit').innerText = h_data[2] + ' L';
-          }
-          if (k_data && k_data[1] && k_data[2]) {
-            document.getElementById('k_pct').innerText = k_data[1] + '%';
-            document.getElementById('k_lit').innerText = k_data[2] + ' L';
-          }
-          if (s_data && s_data[1] && s_data[2]) {
-            document.getElementById('s_pct').innerText = s_data[1] + '%';
-            document.getElementById('s_lit').innerText = s_data[2] + ' L';
-          }
+        if (data) {
+          document.getElementById('h_pct').innerText = data.hitachi + '%';
+          document.getElementById('h_lit').innerText = data.hitachiL + ' L';
+          document.getElementById('k_pct').innerText = data.kaveri + '%';
+          document.getElementById('k_lit').innerText = data.kaveriL + ' L';
+          document.getElementById('s_pct').innerText = data.sump + '%';
+          document.getElementById('s_lit').innerText = data.sumpL + ' L';
           
           document.getElementById('ts').innerText = "Live Telemetry Sync Active • " + new Date().toLocaleTimeString();
         }
       } catch(e) {
-        document.getElementById('ts').innerText = "Sync delayed. Parsing communication matrix...";
+        document.getElementById('ts').innerText = "Connecting to Google Firebase servers...";
       }
     }
 
@@ -66,7 +50,7 @@
       }
     }
 
-    setInterval(getLatestMetrics, 4000);
+    setInterval(getLatestMetrics, 3000);
     window.onload = getLatestMetrics;
   </script>
 </head>
@@ -76,23 +60,23 @@
   <div class="card">
     <h3>Hitachi Tank</h3>
     <div id="h_pct" class="val">--%</div>
-    <div id="h_lit" style="font-size:14px;color:#94a3b8;margin-bottom:10px;">-- L</div>
+    <div id="h_lit" class="litres">-- L</div>
     <button class="btn" onclick="triggerHardware('/pulse_hitachi')">START HITACHI PUMP</button>
   </div>
   
   <div class="card">
     <h3>Kaveri Tank</h3>
     <div id="k_pct" class="val" style="color:#ef4444">--%</div>
-    <div id="k_lit" style="font-size:14px;color:#94a3b8;margin-bottom:10px;">-- L</div>
+    <div id="k_lit" class="litres">-- L</div>
     <button class="btn btn-kaveri" onclick="triggerHardware('/pulse_kaveri')">START KAVERI PUMP</button>
   </div>
   
   <div class="card">
     <h3>Underground Sump</h3>
     <div id="s_pct" class="val" style="color:#10b981">--%</div>
-    <div id="s_lit" style="font-size:14px;color:#94a3b8;">-- L</div>
+    <div id="s_lit" class="litres">-- L</div>
   </div>
   
-  <div id="ts" class="status">Connecting to Telegram data servers...</div>
+  <div id="ts" class="status">Connecting to storage channel...</div>
 </body>
 </html>
