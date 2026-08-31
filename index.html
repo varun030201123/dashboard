@@ -30,20 +30,21 @@
           
           let text = msgObj.text;
 
-          // Multi line scrapers extract raw matches safely bypassing old formatting bottlenecks
+          // Advanced extraction patterns parse numbers inside capture brackets safely
           let h_data = text.match(/Hitachi:\s*(\d+)%\s*\((\d+)\s*L\)/);
           let k_data = text.match(/Kaveri:\s*(\d+)%\s*\((\d+)\s*L\)/);
           let s_data = text.match(/Sump:\s*(\d+)%\s*\((\d+)\s*L\)/);
 
-          if (h_data) {
+          // FIXED: Adding [1] extracts the percentage group; [2] extracts the litres group
+          if (h_data && h_data[1] && h_data[2]) {
             document.getElementById('h_pct').innerText = h_data[1] + '%';
             document.getElementById('h_lit').innerText = h_data[2] + ' L';
           }
-          if (k_data) {
+          if (k_data && k_data[1] && k_data[2]) {
             document.getElementById('k_pct').innerText = k_data[1] + '%';
             document.getElementById('k_lit').innerText = k_data[2] + ' L';
           }
-          if (s_data) {
+          if (s_data && s_data[1] && s_data[2]) {
             document.getElementById('s_pct').innerText = s_data[1] + '%';
             document.getElementById('s_lit').innerText = s_data[2] + ' L';
           }
