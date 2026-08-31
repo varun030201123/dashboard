@@ -5,79 +5,95 @@
   <title>Global Water Portal</title>
   <style>
     body { font-family: sans-serif; background: #0f172a; color: #f8fafc; text-align: center; padding: 20px; }
-    .card { background: #1e293b; padding: 20px; margin: 15px auto; border-radius: 12px; max-width: 340px; border: 1px solid #334155; }
-    h3 { margin: 0; color: #94a3b8; font-size: 14px; text-transform: uppercase; }
+    .card { background: #1e293b; padding: 20px; margin: 15px auto; border-radius: 12px; max-width: 340px; border: 1px solid #334155; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+    h3 { margin: 0; color: #94a3b8; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; }
     .val { font-size: 40px; font-weight: bold; color: #38bdf8; margin: 10px 0; }
     .litres { font-size: 16px; color: #cbd5e1; margin-bottom: 15px; }
-    .btn { background: #3b82f6; color: #fff; border: none; padding: 12px; width: 100%; font-size: 15px; font-weight: bold; border-radius: 10px; cursor: pointer; }
+    .btn { background: #3b82f6; color: #fff; border: none; padding: 12px; width: 100%; font-size: 15px; font-weight: bold; border-radius: 10px; cursor: pointer; transition: 0.2s; }
+    .btn:hover { background: #2563eb; }
     .btn-kaveri { background: #ef4444; }
+    .btn-kaveri:hover { background: #dc2626; }
     .status { font-size: 11px; color: #64748b; margin-top: 15px; }
   </style>
   <script>
     const BOT_TOKEN = "8869292582:AAFXHhmp_kf1Irg8suhlQJj_b2OSJMQ_dvY";
-    // REPLACE THIS WITH YOUR DIRECT PROFILE CHAT ID
     const CHAT_ID = "616335359"; 
 
     async function getLatestMetrics() {
       try {
+        // Fetch the absolute newest status broadcast log inside your bot space
         let res = await fetch(`https://telegram.org{BOT_TOKEN}/getUpdates?offset=-1`);
         let data = await res.json();
+        
         if (data.ok && data.result.length > 0) {
-          let text = data.result[0].message.text;
+          // Track message body location depending on user trigger state origins
+          let updateObj = data.result[0];
+          let msgObj = updateObj.message || updateObj.edited_message || updateObj.channel_post;
+          if (!msgObj || !msgObj.text) return;
           
-          // Parse string metrics maps out from data blocks cleanly
-          let h_pct = text.match(/Hitachi Tank:\s*(\d+)%/)[1];
-          let h_lit = text.match(/Hitachi Tank:.*\((\d+)\s*L\)/)[1];
-          let k_pct = text.match(/Kaveri Tank:\s*(\d+)%/)[1];
-          let k_lit = text.match(/Kaveri Tank:.*\((\d+)\s*L\)/)[1];
-          let s_pct = text.match(/Underground Sump:\s*(\d+)%/)[1];
-          let s_lit = text.match(/Underground Sump:.*\((\d+)\s*L\)/)[1];
+          let text = msgObj.text;
 
-          document.getElementById('h_pct').innerText = h_pct + '%';
-          document.getElementById('h_lit').innerText = h_lit + ' L';
-          document.getElementById('k_pct').innerText = k_pct + '%';
-          document.getElementById('k_lit').innerText = k_lit + ' L';
-          document.getElementById('s_pct').innerText = s_pct + '%';
-          document.getElementById('s_lit').innerText = s_lit + ' L';
-          document.getElementById('ts').innerText = "Dashboard Active • Auto-Refreshing";
+          // Multi-line wildcards ignore bold asterisks and strip out clean integers
+          let h_pct = text.match(/Hitachi Tank[\s\S]*?(\d+)%/);
+          let h_lit = text.match(/Hitachi Tank[\s\S]*?\((\d+)\s*L\)/);
+          let k_pct = text.match(/Kaveri Tank[\s\S]*?(\d+)%/);
+          let k_lit = text.match(/Kaveri Tank[\s\S]*?\((\d+)\s*L\)/);
+          let s_pct = text.match(/Underground Sump[\s\S]*?(\d+)%/);
+          let s_lit = text.match(/Underground Sump[\s\S]*?\((\d+)\s*L\)/);
+
+          // Update display cards by extracting index [1] (the capture group value)
+          if (h_pct) document.getElementById('h_pct').innerText = h_pct[1] + '%';
+          if (h_lit) document.getElementById('h_lit').innerText = h_lit[1] + ' L';
+          if (k_pct) document.getElementById('k_pct').innerText = k_pct[1] + '%';
+          if (k_lit) document.getElementById('k_lit').innerText = k_lit[1] + ' L';
+          if (s_pct) document.getElementById('s_pct').innerText = s_pct[1] + '%';
+          if (s_lit) document.getElementById('s_lit').innerText = s_lit[1] + ' L';
+          
+          document.getElementById('ts').innerText = "Live Telemetry Sync Active • " + new Date().toLocaleTimeString();
         }
       } catch(e) {
-        document.getElementById('ts').innerText = "Awaiting live data broadcast stream from bot room...";
+        document.getElementById('ts').innerText = "Sync delayed. Awaiting live data from bot chat...";
       }
     }
 
     async function triggerHardware(command) {
       try {
-        await fetch(`https://telegram.org{BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${command}`);
+        let url = `https://telegram.org{BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${command}`;
+        await fetch(url);
         alert("Command sent: " + command);
       } catch(e) {
         alert("Transmission failure.");
       }
     }
 
-    setInterval(getLatestMetrics, 4000);
+    // High frequency execution loop processes updates every 3 seconds
+    setInterval(getLatestMetrics, 3000);
     window.onload = getLatestMetrics;
   </script>
 </head>
 <body>
   <h2>GLOBAL WATER PORTAL</h2>
+  
   <div class="card">
     <h3>Hitachi Tank</h3>
     <div id="h_pct" class="val">--%</div>
     <div id="h_lit" class="litres">-- L</div>
     <button class="btn" onclick="triggerHardware('/pulse_hitachi')">START HITACHI PUMP</button>
   </div>
+  
   <div class="card">
     <h3>Kaveri Tank</h3>
     <div id="k_pct" class="val" style="color:#ef4444">--%</div>
     <div id="k_lit" class="litres">-- L</div>
     <button class="btn btn-kaveri" onclick="triggerHardware('/pulse_kaveri')">START KAVERI PUMP</button>
   </div>
+  
   <div class="card">
     <h3>Underground Sump</h3>
     <div id="s_pct" class="val" style="color:#10b981">--%</div>
     <div id="s_lit" class="litres">-- L</div>
   </div>
-  <div id="ts" class="status">Connecting...</div>
+  
+  <div id="ts" class="status">Connecting to Telegram data servers...</div>
 </body>
 </html>
