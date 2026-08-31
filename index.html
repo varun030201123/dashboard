@@ -15,56 +15,9 @@
     .btn-kaveri:hover { background: #dc2626; }
     .status { font-size: 11px; color: #64748b; margin-top: 15px; }
   </style>
-  <script>
-    const FIREBASE_URL = "https://firebaseio.com";
-
-    async function getLatestMetrics() {
-      try {
-        let res = await fetch(FIREBASE_URL + "live.json");
-        let data = await res.json();
-        
-        if (data) {
-          document.getElementById('h_pct').innerText = data.hitachi + '%';
-          document.getElementById('h_lit').innerText = data.hitachiL + ' L';
-          document.getElementById('k_pct').innerText = data.kaveri + '%';
-          document.getElementById('k_lit').innerText = data.kaveriL + ' L';
-          document.getElementById('s_pct').innerText = data.sump + '%';
-          document.getElementById('s_lit').innerText = data.sumpL + ' L';
-          
-          document.getElementById('ts').innerText = "Live Telemetry Sync Active • " + new Date().toLocaleTimeString();
-        }
-      } catch(e) {
-        document.getElementById('ts').innerText = "Connecting to Google Firebase servers...";
-      }
-    }
-
-    async function triggerHardware(pumpType) {
-      try {
-        let h_val = (pumpType === 'hitachi') ? 1 : 0;
-        let k_val = (pumpType === 'kaveri') ? 1 : 0;
-        
-        let payload = { "cmd_hitachi": h_val, "cmd_kaveri": k_val };
-        
-        let res = await fetch(FIREBASE_URL + "control.json", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-        
-        if(res.ok) {
-          alert("🚀 Pump command dispatched successfully!");
-          getLatestMetrics(); // Force an immediate refresh after clicking
-        } else {
-          throw new Error();
-        }
-      } catch(e) {
-        alert("Transmission processing failure. Verify Firebase rules configuration.");
-      }
-    }
-
-    setInterval(getLatestMetrics, 3000);
-    window.onload = getLatestMetrics;
-  </script>
+  <!-- Load Official Google Firebase Core App and Database Libraries Natively to Bypass Browser Blockers -->
+  <script src="https://gstatic.com"></script>
+  <script src="https://gstatic.com"></script>
 </head>
 <body>
   <h2>GLOBAL WATER PORTAL</h2>
@@ -90,5 +43,49 @@
   </div>
   
   <div id="ts" class="status">Connecting to storage channel...</div>
+  <script>
+    // Configured directly with your live project node parameters
+    const firebaseConfig = {
+      databaseURL: "https://firebaseio.com"
+    };
+    
+    // Initialize Google Firebase connection natively
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
+    // Listens to database updates dynamically without polling lag or raw HTTP errors
+    database.ref("live").on("value", (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        document.getElementById('h_pct').innerText = (data.hitachi !== undefined ? data.hitachi : "--") + '%';
+        document.getElementById('h_lit').innerText = (data.hitachiL !== undefined ? data.hitachiL : "--") + ' L';
+        document.getElementById('k_pct').innerText = (data.kaveri !== undefined ? data.kaveri : "--") + '%';
+        document.getElementById('k_lit').innerText = (data.kaveriL !== undefined ? data.kaveriL : "--") + ' L';
+        document.getElementById('s_pct').innerText = (data.sump !== undefined ? data.sump : "--") + '%';
+        document.getElementById('s_lit').innerText = (data.sumpL !== undefined ? data.sumpL : "--") + ' L';
+        
+        document.getElementById('ts').innerText = "Live Telemetry Sync Active • " + new Date().toLocaleTimeString();
+      }
+    }, (error) => {
+      document.getElementById('ts').innerText = "Connecting to Google Firebase servers...";
+    });
+
+    // Pushes your pump button variables into the database control node
+    function triggerHardware(pumpType) {
+      try {
+        let h_val = (pumpType === 'hitachi') ? 1 : 0;
+        let k_val = (pumpType === 'kaveri')  ? 1 : 0;
+        
+        database.ref("control").set({
+          cmd_hitachi: h_val,
+          cmd_kaveri: k_val
+        });
+
+        alert("🚀 Pump command dispatched successfully!");
+      } catch(e) {
+        alert("Transmission processing failure.");
+      }
+    }
+  </script>
 </body>
 </html>
