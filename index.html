@@ -1,7 +1,6 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Global Water Portal</title>
   <style>
@@ -45,22 +44,21 @@
   <div id="ts" class="status">Connecting to storage channel...</div>
 
   <script>
-    const firebaseConfig = {
-      databaseURL: "https://firebaseio.com"
-    };
+    const FIREBASE_URL = "https://firebaseio.com";
     
-    firebase.initializeApp(firebaseConfig);
+    firebase.initializeApp({ databaseURL: FIREBASE_URL });
     const database = firebase.database();
 
-    database.ref("live").on("value", (snapshot) => {
+    // FIXED PATH TARGET: Points exactly inside the deep live/data node tree structure
+    database.ref("live/data").on("value", (snapshot) => {
       const data = snapshot.val();
       if (data) {
-        document.getElementById('h_pct').innerText = (data.hitachi !== undefined ? data.hitachi : "--") + '%';
-        document.getElementById('h_lit').innerText = (data.hitachiL !== undefined ? data.hitachiL : "--") + ' L';
-        document.getElementById('k_pct').innerText = (data.kaveri !== undefined ? data.kaveri : "--") + '%';
-        document.getElementById('k_lit').innerText = (data.kaveriL !== undefined ? data.kaveriL : "--") + ' L';
-        document.getElementById('s_pct').innerText = (data.sump !== undefined ? data.sump : "--") + '%';
-        document.getElementById('s_lit').innerText = (data.sumpL !== undefined ? data.sumpL : "--") + ' L';
+        document.getElementById('h_pct').innerText = (data.hitachi !== undefined ? data.hitachi : "0") + '%';
+        document.getElementById('h_lit').innerText = (data.hitachiL !== undefined ? data.hitachiL : "0") + ' L';
+        document.getElementById('k_pct').innerText = (data.kaveri !== undefined ? data.kaveri : "0") + '%';
+        document.getElementById('k_lit').innerText = (data.kaveriL !== undefined ? data.kaveriL : "0") + ' L';
+        document.getElementById('s_pct').innerText = (data.sump !== undefined ? data.sump : "0") + '%';
+        document.getElementById('s_lit').innerText = (data.sumpL !== undefined ? data.sumpL : "0") + ' L';
         
         document.getElementById('ts').innerText = "Live Telemetry Sync Active • " + new Date().toLocaleTimeString();
       }
