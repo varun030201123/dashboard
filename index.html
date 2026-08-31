@@ -15,6 +15,8 @@
     .btn-kaveri:hover { background: #dc2626; }
     .status { font-size: 11px; color: #64748b; margin-top: 15px; }
   </style>
+  <!-- Load Official Paho MQTT Web Client Library -->
+  <script src="https://cloudflare.com" type="text/javascript"></script>
 </head>
 <body>
   <h2>GLOBAL WATER PORTAL</h2>
@@ -39,53 +41,64 @@
     <div id="s_lit" class="litres">-- L</div>
   </div>
   
-  <div id="ts" class="status">Connecting to secure tunnel proxy...</div>
+  <div id="ts" class="status">Connecting to secure cloud link...</div>
 
   <script>
-    // Using a permanent, free, CORS-unlocked public WebSocket tunnel room identifier
-    const tunnelSocketUrl = "wss://://piesocket.com";
-    let ws;
+    const mqtt_host = "b43f34d3a7be4a62be5e866909dc3ffc.s1.eu.hivemq.cloud";
+    const mqtt_port = 8884; // Secure WebSockets SSL port for browsers
+    
+    let client = new Paho.MQTT.Client(mqtt_host, mqtt_port, "web_client_" + Math.random().toString(16).substr(2, 8));
 
-    function connectTunnel() {
-      ws = new WebSocket(tunnelSocketUrl);
+    client.onConnectionLost = onConnectionLost;
+    client.onMessageArrived = onMessageArrived;
 
-      ws.onopen = () => {
-        document.getElementById('ts').innerText = "Live Secure Tunnel Sync Active";
-      };
+    let options = {
+      useSSL: true,
+      userName: "varun",
+      password: "Varun322001",
+      onSuccess: onConnect,
+      onFailure: onFailure
+    };
 
-      // Receives real-time sensor metrics streams continuously dropped from your home ESP32 chip
-      ws.onmessage = (event) => {
-        try {
-          let data = JSON.parse(event.data);
-          if (data.type === "telemetry") {
-            document.getElementById('h_pct').innerText = data.hitachi + '%';
-            document.getElementById('h_lit').innerText = data.hitachiL + ' L';
-            document.getElementById('k_pct').innerText = data.kaveri + '%';
-            document.getElementById('k_lit').innerText = data.kaveriL + ' L';
-            document.getElementById('s_pct').innerText = data.sump + '%';
-            document.getElementById('s_lit').innerText = data.sumpL + ' L';
-          }
-        } catch(e) {}
-      };
+    client.connect(options);
 
-      ws.onclose = () => {
-        document.getElementById('ts').innerText = "Tunnel connection lost. Reconnecting...";
-        setTimeout(connectTunnel, 3000); // Continuous auto-reconnection sequence logic
-      };
+    function onConnect() {
+      document.getElementById('ts').innerText = "Live Secure Tunnel Sync Active";
+      client.subscribe("home/water/live");
     }
 
-    // Sends the control pulse string up into the tunnel right to your hardware chip instant-response arrays
+    function onFailure(err) {
+      document.getElementById('ts').innerText = "Connection failed. Retrying...";
+      setTimeout(() => client.connect(options), 5000);
+    }
+
+    function onConnectionLost(responseObject) {
+      document.getElementById('ts').innerText = "Link broken. Re-establishing secure connection...";
+      setTimeout(() => client.connect(options), 5000);
+    }
+
+    function onMessageArrived(message) {
+      try {
+        let data = JSON.parse(message.payloadString);
+        document.getElementById('h_pct').innerText = data.hitachi + '%';
+        document.getElementById('h_lit').innerText = data.hitachiL + ' L';
+        document.getElementById('k_pct').innerText = data.kaveri + '%';
+        document.getElementById('k_lit').innerText = data.kaveriL + ' L';
+        document.getElementById('s_pct').innerText = data.sump + '%';
+        document.getElementById('s_lit').innerText = data.sumpL + ' L';
+      } catch(e) {}
+    }
+
     function sendTrigger(actionCommand) {
-      if (ws && ws.readyState === WebSocket.OPEN) {
-        let payload = { type: "control", command: actionCommand };
-        ws.send(JSON.stringify(payload));
+      try {
+        let message = new Paho.MQTT.Message(actionCommand);
+        message.destinationName = "home/water/control";
+        client.send(message);
         alert("🚀 Command dispatched successfully down into the home hardware tunnel!");
-      } else {
-        alert("Transmission processing failure. Tunnel offline.");
+      } catch(e) {
+        alert("Transmission processing failure.");
       }
     }
-
-    window.onload = connectTunnel;
   </script>
 </body>
 </html>
