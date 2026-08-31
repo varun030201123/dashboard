@@ -51,15 +51,25 @@
     client.onConnectionLost = onConnectionLost;
     client.onMessageArrived = onMessageArrived;
 
+    // FIXED OVERRIDE MATRIX: Forces secure WebSockets compliance mapping parameters explicitly
     let options = {
       useSSL: true,
+      timeout: 3,
+      mqttVersion: 4,
+      keepAliveInterval: 60,
       userName: "varun",
       password: "Varun322001",
       onSuccess: onConnect,
       onFailure: onFailure
     };
 
-    client.connect(options);
+    function startMqttConnection() {
+      try {
+        client.connect(options);
+      } catch (e) {
+        setTimeout(startMqttConnection, 5000);
+      }
+    }
 
     function onConnect() {
       document.getElementById('ts').innerText = "Live Secure Tunnel Sync Active";
@@ -68,36 +78,42 @@
 
     function onFailure(err) {
       document.getElementById('ts').innerText = "Connection failed. Retrying...";
-      setTimeout(() => { client.connect(options); }, 5000);
+      setTimeout(startMqttConnection, 5000);
     }
 
     function onConnectionLost(responseObject) {
-      document.getElementById('ts').innerText = "Link broken. Re-establishing secure connection...";
-      setTimeout(() => { client.connect(options); }, 5000);
+      document.getElementById('ts').innerText = "Link broken. Re-establishing connection...";
+      setTimeout(startMqttConnection, 5000);
     }
 
     function onMessageArrived(message) {
       try {
         let data = JSON.parse(message.payloadString);
-        document.getElementById('h_pct').innerText = data.hitachi + '%';
-        document.getElementById('h_lit').innerText = data.hitachiL + ' L';
-        document.getElementById('k_pct').innerText = data.kaveri + '%';
-        document.getElementById('k_lit').innerText = data.kaveriL + ' L';
-        document.getElementById('s_pct').innerText = data.sump + '%';
-        document.getElementById('s_lit').innerText = data.sumpL + ' L';
+        document.getElementById('h_pct').innerText = (data.hitachi !== undefined ? data.hitachi : "0") + '%';
+        document.getElementById('h_lit').innerText = (data.hitachiL !== undefined ? data.hitachiL : "0") + ' L';
+        document.getElementById('k_pct').innerText = (data.kaveri !== undefined ? data.kaveri : "0") + '%';
+        document.getElementById('k_lit').innerText = (data.kaveriL !== undefined ? data.kaveriL : "0") + ' L';
+        document.getElementById('s_pct').innerText = (data.sump !== undefined ? data.sump : "0") + '%';
+        document.getElementById('s_lit').innerText = (data.sumpL !== undefined ? data.sumpL : "0") + ' L';
       } catch(e) {}
     }
 
     function sendTrigger(actionCommand) {
       try {
-        let message = new Paho.MQTT.Message(actionCommand);
-        message.destinationName = "home/water/control";
-        client.send(message);
-        alert("🚀 Command dispatched successfully down into the home hardware tunnel!");
+        if(client.isConnected()) {
+          let message = new Paho.MQTT.Message(actionCommand);
+          message.destinationName = "home/water/control";
+          client.send(message);
+          alert("🚀 Command dispatched successfully down into the home hardware tunnel!");
+        } else {
+          alert("Tunnel connection currently down. Retry in a few moments.");
+        }
       } catch(e) {
         alert("Transmission processing failure.");
       }
     }
+
+    window.onload = startMqttConnection;
   </script>
 </body>
 </html>
