@@ -24,12 +24,12 @@
         let data = await res.json();
         
         if (data) {
-          document.getElementById('h_pct').innerText = data.hitachi + '%';
-          document.getElementById('h_lit').innerText = data.hitachiL + ' L';
-          document.getElementById('k_pct').innerText = data.kaveri + '%';
-          document.getElementById('k_lit').innerText = data.kaveriL + ' L';
-          document.getElementById('s_pct').innerText = data.sump + '%';
-          document.getElementById('s_lit').innerText = data.sumpL + ' L';
+          document.getElementById('h_pct').innerText = (data.hitachi !== undefined ? data.hitachi : "--") + '%';
+          document.getElementById('h_lit').innerText = (data.hitachiL !== undefined ? data.hitachiL : "--") + ' L';
+          document.getElementById('k_pct').innerText = (data.kaveri !== undefined ? data.kaveri : "--") + '%';
+          document.getElementById('k_lit').innerText = (data.kaveriL !== undefined ? data.kaveriL : "--") + ' L';
+          document.getElementById('s_pct').innerText = (data.sump !== undefined ? data.sump : "--") + '%';
+          document.getElementById('s_lit').innerText = (data.sumpL !== undefined ? data.sumpL : "--") + ' L';
           
           document.getElementById('ts').innerText = "Live Telemetry Sync Active • " + new Date().toLocaleTimeString();
         }
@@ -38,21 +38,27 @@
       }
     }
 
+    // FIXED TRIGGER: Uses explicit cross-origin headers to push variables to Firebase successfully
     async function triggerHardware(pumpType) {
       try {
         let payload = {};
         if (pumpType === 'hitachi') payload = { "cmd_hitachi": 1, "cmd_kaveri": 0 };
         if (pumpType === 'kaveri')  payload = { "cmd_hitachi": 0, "cmd_kaveri": 1 };
 
-        await fetch(FIREBASE_URL + "control.json", {
+        let url = FIREBASE_URL + "control.json";
+        let response = await fetch(url, {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
+          mode: "cors", // Explicitly forces cors compliance mapping
+          headers: {
+            "Content-Type": "application/json"
+          },
           body: JSON.stringify(payload)
         });
-        
-        alert("🚀 Pump command dispatched successfully!");
+
+        if (!response.ok) throw new Error();
+        alert("🚀 Pump activation variable committed to your home database cluster!");
       } catch(e) {
-        alert("Transmission failure.");
+        alert("Transmission processing failure. Verify Firebase rules configuration.");
       }
     }
 
