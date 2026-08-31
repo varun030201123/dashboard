@@ -1,39 +1,63 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Global Water Portal</title>
   <style>
     body { font-family: sans-serif; background: #0f172a; color: #f8fafc; text-align: center; padding: 20px; }
     .card { background: #1e293b; padding: 20px; margin: 15px auto; border-radius: 12px; max-width: 340px; border: 1px solid #334155; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
     h3 { margin: 0; color: #94a3b8; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; }
     .val { font-size: 40px; font-weight: bold; color: #38bdf8; margin: 10px 0; }
+    .litres { font-size: 16px; color: #cbd5e1; margin-bottom: 15px; }
+    .btn { background: #3b82f6; color: #fff; border: none; padding: 12px; width: 100%; font-size: 15px; font-weight: bold; border-radius: 10px; cursor: pointer; transition: 0.2s; }
+    .btn:hover { background: #2563eb; }
+    .btn-kaveri { background: #ef4444; }
+    .btn-kaveri:hover { background: #dc2626; }
     .status { font-size: 11px; color: #64748b; margin-top: 15px; }
   </style>
   <script>
-    // CHANGE THIS TO YOUR UNIQUE THINGSPEAK CHANNEL ID NUMBER
-    const CHANNEL_ID = "PASTE_YOUR_THINGSPEAK_CHANNEL_ID_HERE"; 
+    const BOT_TOKEN = "8869292582:AAFXHhmp_kf1Irg8suhlQJj_b2OSJMQ_dvY";
+    const CHAT_ID = "616335359"; 
 
     async function getLatestMetrics() {
       try {
-        let res = await fetch(`https://thingspeak.com{CHANNEL_ID}/feeds.json?results=1`);
+        let res = await fetch(`https://telegram.org{BOT_TOKEN}/getUpdates?offset=-1`);
         let data = await res.json();
         
-        if (data && data.feeds && data.feeds.length > 0) {
-          let lastFeed = data.feeds[0];
+        if (data.ok && data.result && data.result.length > 0) {
+          let latestUpdate = data.result[0]; 
+          let msgObj = latestUpdate.message || latestUpdate.edited_message || latestUpdate.channel_post;
+          if (!msgObj || !msgObj.text) return;
           
-          document.getElementById('h_pct').innerText = (lastFeed.field1 || "0") + '%';
-          document.getElementById('k_pct').innerText = (lastFeed.field2 || "0") + '%';
-          document.getElementById('s_pct').innerText = (lastFeed.field3 || "0") + '%';
+          let text = msgObj.text;
+
+          // Fixed parsing loops that extract values from Telegram message logs cleanly
+          let h_pct = text.match(/Hitachi:\s*(\d+)/);
+          let k_pct = text.match(/Kaveri:\s*(\d+)/);
+          let s_pct = text.match(/Sump:\s*(\d+)/);
+
+          if (h_pct) document.getElementById('h_pct').innerText = h_pct[1] + '%';
+          if (k_pct) document.getElementById('k_pct').innerText = k_pct[1] + '%';
+          if (s_pct) document.getElementById('s_pct').innerText = s_pct[1] + '%';
           
-          document.getElementById('ts').innerText = "Live Telemetry Sync Active • " + new Date(lastFeed.created_at).toLocaleTimeString();
+          document.getElementById('ts').innerText = "Live Telemetry Sync Active • " + new Date().toLocaleTimeString();
         }
       } catch(e) {
-        document.getElementById('ts').innerText = "Connecting to global data servers...";
+        document.getElementById('ts').innerText = "Awaiting first live data card from bot chat room...";
       }
     }
 
-    setInterval(getLatestMetrics, 5000);
+    async function triggerHardware(command) {
+      try {
+        let url = `https://telegram.org{BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${command}`;
+        await fetch(url, { mode: 'no-cors' }); 
+        alert("Command sent successfully to your home hardware panel!");
+      } catch(e) {
+        alert("Transmission failure.");
+      }
+    }
+
+    setInterval(getLatestMetrics, 4000);
     window.onload = getLatestMetrics;
   </script>
 </head>
@@ -43,11 +67,13 @@
   <div class="card">
     <h3>Hitachi Tank</h3>
     <div id="h_pct" class="val">--%</div>
+    <button class="btn" onclick="triggerHardware('/pulse_hitachi')">START HITACHI PUMP</button>
   </div>
   
   <div class="card">
     <h3>Kaveri Tank</h3>
     <div id="k_pct" class="val" style="color:#ef4444">--%</div>
+    <button class="btn btn-kaveri" onclick="triggerHardware('/pulse_kaveri')">START KAVERI PUMP</button>
   </div>
   
   <div class="card">
@@ -55,6 +81,6 @@
     <div id="s_pct" class="val" style="color:#10b981">--%</div>
   </div>
   
-  <div id="ts" class="status">Connecting to storage channel...</div>
+  <div id="ts" class="status">Connecting to Telegram data servers...</div>
 </body>
 </html>
