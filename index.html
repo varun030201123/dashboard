@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- Reduce old cached page problems -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
@@ -302,7 +301,7 @@
   <!-- NAME OVERLAY -->
   <div id="nameOverlay">
     <div class="nameCard">
-      <h1>Welcome 👋</h1>
+      <h1>Welcome</h1>
       <div class="sub">Please enter your name to continue.</div>
 
       <input id="nameInput" type="text" placeholder="Your name" />
@@ -317,7 +316,7 @@
       </div>
 
       <div class="row">
-        <button class="gray" onclick="telegramSubscribe()">📲 Notify me on Telegram</button>
+        <button class="gray" onclick="telegramSubscribe()">Notify me on Telegram</button>
       </div>
     </div>
   </div>
@@ -327,7 +326,7 @@
     <div class="topbar">
       <div>
         <h1>Building Water</h1>
-        <div class="sub">Live fob telemetry mirror</div>
+        <div class="sub">Live telemetry mirror</div>
       </div>
       <div class="user-badge" id="userBadge">Guest</div>
     </div>
@@ -371,7 +370,7 @@
           Optional — get a Telegram message when the sump hits 100%.
         </div>
         <div class="row">
-          <button class="gray" onclick="telegramSubscribe()">📲 Notify me on Telegram</button>
+          <button class="gray" onclick="telegramSubscribe()">Notify me on Telegram</button>
         </div>
       </div>
 
@@ -386,7 +385,7 @@
         <h2>Today's Draw</h2>
         <div class="big" id="dailyDraw">-- L</div>
         <div class="row">
-          <button class="gray" onclick="cmdResetDaily()">↺ Reset Day</button>
+          <button class="gray" onclick="cmdResetDaily()">Reset Day</button>
         </div>
       </div>
 
@@ -395,15 +394,15 @@
         <div class="big" id="monthlyDraw">-- L</div>
         <div class="muted">Since 1st</div>
         <div class="row">
-          <button class="gray" onclick="cmdResetMonthly()">↺ Reset Month</button>
+          <button class="gray" onclick="cmdResetMonthly()">Reset Month</button>
         </div>
       </div>
 
       <div class="card span2">
         <h2>Manual Fill Override</h2>
         <div class="row">
-          <button onclick="cmdFill(1)">💧 Fill Hitachi</button>
-          <button class="red" onclick="cmdFill(2)">💧 Fill Kaveri</button>
+          <button onclick="cmdFill(1)">Fill Hitachi</button>
+          <button class="red" onclick="cmdFill(2)">Fill Kaveri</button>
         </div>
         <div class="muted">Momentary trigger</div>
         <div class="msg" id="actionMsg"></div>
@@ -412,7 +411,7 @@
 
     <div style="text-align:center; margin-top:16px;">
       <button class="gray" onclick="toggleCalMenu()" style="max-width:520px;">
-        ⚙️ OPEN CONFIGURATION MENU
+        OPEN CONFIGURATION MENU
       </button>
     </div>
 
@@ -447,7 +446,7 @@
     </div>
 
     <div class="footer">
-      Building Water · fob node mirror · polling 2s
+      Building Water · telemetry mirror · polling 2s
     </div>
   </div>
 
@@ -458,7 +457,6 @@
     const FB_HOST = "https://watermonitor-ace8e-default-rtdb.asia-southeast1.firebasedatabase.app";
     const FB_AUTH = "AIzaSyAWzWVuFyeAq7WEV7ZrY2ic0akuPYV2Ndw";
 
-    // Your Telegram bot username without @
     const TELEGRAM_BOT_USERNAME = "Botwaterlevelmonitor_bot";
 
     let userName = "";
@@ -477,9 +475,7 @@
           expires = "; expires=" + d.toUTCString();
         }
         document.cookie = name + "=" + encodeURIComponent(value) + expires + "; path=/; SameSite=Lax";
-      } catch (e) {
-        console.error(e);
-      }
+      } catch (e) {}
     }
 
     function getCookie(name) {
@@ -493,31 +489,12 @@
             return decodeURIComponent(p.substring(cname.length));
           }
         }
-      } catch (e) {
-        console.error(e);
-      }
+      } catch (e) {}
 
       return "";
     }
 
-    function saveName(name) {
-      userName = name;
-
-      try {
-        localStorage.setItem("waterUserName", name);
-        localStorage.setItem("userName", name);
-        localStorage.setItem("user_name", name);
-        localStorage.setItem("name", name);
-      } catch (e) {
-        console.error(e);
-      }
-
-      setCookie("waterUserName", name, 3650);
-      setCookie("userName", name, 3650);
-    }
-
     function loadName() {
-      // Try localStorage first
       try {
         const keys = [
           "waterUserName",
@@ -532,16 +509,12 @@
             return String(v).trim();
           }
         }
-      } catch (e) {
-        console.error(e);
-      }
+      } catch (e) {}
 
-      // Fallback to cookie
       const c = getCookie("waterUserName") || getCookie("userName");
       if (c && String(c).trim()) {
         const name = String(c).trim();
 
-        // Try to promote cookie value into localStorage
         try {
           localStorage.setItem("waterUserName", name);
           localStorage.setItem("userName", name);
@@ -551,6 +524,20 @@
       }
 
       return "";
+    }
+
+    function saveName(name) {
+      userName = name;
+
+      try {
+        localStorage.setItem("waterUserName", name);
+        localStorage.setItem("userName", name);
+        localStorage.setItem("user_name", name);
+        localStorage.setItem("name", name);
+      } catch (e) {}
+
+      setCookie("waterUserName", name, 3650);
+      setCookie("userName", name, 3650);
     }
 
     // ============================================================
@@ -734,7 +721,7 @@
         const alive = age < 30;
 
         const statusText = alive
-          ? "Live fob telemetry mirror · Updated: " + new Date(d.lastSeenEpoch * 1000).toLocaleTimeString()
+          ? "Live telemetry mirror · Updated: " + new Date(d.lastSeenEpoch * 1000).toLocaleTimeString()
           : "Connecting… / ESP32 offline";
 
         $("statusBar").textContent = statusText;
@@ -769,10 +756,10 @@
         const banner = $("fillBanner");
         if (Number(d.fillingMode) === 1) {
           banner.style.display = "block";
-          banner.textContent = "🛑 MOTOR STARTED: HITACHI MOTOR ON";
+          banner.textContent = "MOTOR STARTED: HITACHI MOTOR ON";
         } else if (Number(d.fillingMode) === 2) {
           banner.style.display = "block";
-          banner.textContent = "🛑 MOTOR STARTED: KAVERI MOTOR ON";
+          banner.textContent = "MOTOR STARTED: KAVERI MOTOR ON";
         } else {
           banner.style.display = "none";
         }
@@ -785,7 +772,7 @@
     // ============================================================
     // INIT
     // ============================================================
-    window.addEventListener("DOMContentLoaded", function() {
+    document.addEventListener("DOMContentLoaded", function() {
       userName = loadName();
 
       const input = $("nameInput");
