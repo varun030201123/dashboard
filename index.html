@@ -3,7 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Reduce old cached page problems -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+
   <title>Building Water</title>
+
   <style>
     :root {
       --bg: #071120;
@@ -291,6 +298,7 @@
   </style>
 </head>
 <body>
+
   <!-- NAME OVERLAY -->
   <div id="nameOverlay">
     <div class="nameCard">
@@ -450,15 +458,103 @@
     const FB_HOST = "https://watermonitor-ace8e-default-rtdb.asia-southeast1.firebasedatabase.app";
     const FB_AUTH = "AIzaSyAWzWVuFyeAq7WEV7ZrY2ic0akuPYV2Ndw";
 
-    // CHANGE THIS to your actual Telegram bot username
-    const TELEGRAM_BOT_USERNAME = "@Botwaterlevelmonitor_bot";
+    // Your Telegram bot username without @
+    const TELEGRAM_BOT_USERNAME = "Botwaterlevelmonitor_bot";
 
-    let userName = localStorage.getItem("@Botwaterlevelmonitor_bot") || "";
+    let userName = "";
     let pollTimer = null;
     let pageOpenedSent = false;
 
     // ============================================================
-    // HELPERS
+    // NAME STORAGE HELPERS
+    // ============================================================
+    function setCookie(name, value, days) {
+      try {
+        let expires = "";
+        if (days) {
+          const d = new Date();
+          d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+          expires = "; expires=" + d.toUTCString();
+        }
+        document.cookie = name + "=" + encodeURIComponent(value) + expires + "; path=/; SameSite=Lax";
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function getCookie(name) {
+      try {
+        const cname = name + "=";
+        const parts = document.cookie.split(";");
+
+        for (let p of parts) {
+          p = p.trim();
+          if (p.indexOf(cname) === 0) {
+            return decodeURIComponent(p.substring(cname.length));
+          }
+        }
+      } catch (e) {
+        console.error(e);
+      }
+
+      return "";
+    }
+
+    function saveName(name) {
+      userName = name;
+
+      try {
+        localStorage.setItem("waterUserName", name);
+        localStorage.setItem("userName", name);
+        localStorage.setItem("user_name", name);
+        localStorage.setItem("name", name);
+      } catch (e) {
+        console.error(e);
+      }
+
+      setCookie("waterUserName", name, 3650);
+      setCookie("userName", name, 3650);
+    }
+
+    function loadName() {
+      // Try localStorage first
+      try {
+        const keys = [
+          "waterUserName",
+          "userName",
+          "user_name",
+          "name"
+        ];
+
+        for (const k of keys) {
+          const v = localStorage.getItem(k);
+          if (v && String(v).trim()) {
+            return String(v).trim();
+          }
+        }
+      } catch (e) {
+        console.error(e);
+      }
+
+      // Fallback to cookie
+      const c = getCookie("waterUserName") || getCookie("userName");
+      if (c && String(c).trim()) {
+        const name = String(c).trim();
+
+        // Try to promote cookie value into localStorage
+        try {
+          localStorage.setItem("waterUserName", name);
+          localStorage.setItem("userName", name);
+        } catch (e) {}
+
+        return name;
+      }
+
+      return "";
+    }
+
+    // ============================================================
+    // BASIC HELPERS
     // ============================================================
     function $(id) {
       return document.getElementById(id);
@@ -517,7 +613,7 @@
     }
 
     // ============================================================
-    // NAME / START
+    // APP START
     // ============================================================
     function startApp() {
       $("nameOverlay").classList.add("hidden");
@@ -526,6 +622,7 @@
 
       if (!pageOpenedSent) {
         pageOpenedSent = true;
+
         fbPatch({
           pageOpenedFlag: 1,
           pageOpenedBy: actor()
@@ -546,8 +643,7 @@
         return;
       }
 
-      userName = name;
-      localStorage.setItem("waterUserName", userName);
+      saveName(name);
 
       try {
         await fetch(FB_HOST + "/registeredUsers/" + Date.now() + ".json?auth=" + encodeURIComponent(FB_AUTH), {
@@ -555,7 +651,7 @@
           headers: {
             "Content-Type": "application/json"
           },
-          body: JSON.stringify(userName)
+          body: JSON.stringify(name)
         });
       } catch (e) {
         console.error(e);
@@ -565,12 +661,8 @@
     }
 
     function telegramSubscribe() {
-      if (TELEGRAM_BOT_USERNAME === "@Botwaterlevelmonitor_bot") {
-        alert("Edit index.html and replace TELEGRAM_BOT_USERNAME with your actual Telegram bot username.");
-        return;
-      }
-
-      window.open("https://t.me/" + TELEGRAM_BOT_USERNAME + "?start=subscribe_sump", "_blank");
+      const u = TELEGRAM_BOT_USERNAME.replace(/^@/, "");
+      window.open("https://t.me/" + u + "?start=subscribe_sump", "_blank");
     }
 
     // ============================================================
@@ -693,8 +785,11 @@
     // ============================================================
     // INIT
     // ============================================================
-    window.addEventListener("load", function() {
-      $("nameInput").value = userName;
+    window.addEventListener("DOMContentLoaded", function() {
+      userName = loadName();
+
+      const input = $("nameInput");
+      if (input) input.value = userName;
 
       if (userName) {
         startApp();
