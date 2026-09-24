@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Water Intelligence</title>
+  <title>Building Water</title>
   <style>
     :root {
       --bg: #071120;
@@ -25,9 +25,7 @@
     body {
       margin: 0;
       padding: 18px;
-      background:
-        radial-gradient(circle at top, rgba(59, 130, 246, 0.18), transparent 32%),
-        var(--bg);
+      background: var(--bg);
       color: var(--text);
       font-family: Inter, Segoe UI, Roboto, Arial, sans-serif;
       min-height: 100vh;
@@ -107,7 +105,7 @@
     }
 
     .card {
-      background: linear-gradient(180deg, rgba(255,255,255,0.03), transparent), var(--panel);
+      background: var(--panel);
       border: 1px solid var(--line);
       border-radius: 16px;
       padding: 16px;
@@ -278,6 +276,18 @@
       font-weight: 700;
       min-height: 18px;
     }
+
+    .low {
+      display: inline-block;
+      background: rgba(239, 68, 68, 0.16);
+      color: #ffd9d9;
+      border: 1px solid rgba(239, 68, 68, 0.35);
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 4px 10px;
+      margin-bottom: 8px;
+    }
   </style>
 </head>
 <body>
@@ -308,7 +318,7 @@
   <div id="app" class="app hidden">
     <div class="topbar">
       <div>
-        <h1>Water Intelligence</h1>
+        <h1>Building Water</h1>
         <div class="sub">Live fob telemetry mirror</div>
       </div>
       <div class="user-badge" id="userBadge">Guest</div>
@@ -325,50 +335,26 @@
     <div class="grid">
       <div class="card">
         <h2>Hitachi Tank</h2>
+        <div class="sub">Overhead storage</div>
+        <div id="hitachiLow" class="low hidden">Low</div>
         <div class="big" id="hitachiPct">--%</div>
         <div class="muted" id="hitachiLitres">Level: -- L</div>
-        <div class="muted">Overhead storage</div>
       </div>
 
       <div class="card">
         <h2>Kaveri Tank</h2>
+        <div class="sub">Overhead storage</div>
+        <div id="kaveriLow" class="low hidden">Low</div>
         <div class="big" id="kaveriPct">--%</div>
         <div class="muted" id="kaveriLitres">Level: -- L</div>
-        <div class="muted">Overhead storage</div>
       </div>
 
       <div class="card span2">
         <h2>Underground Sump</h2>
+        <div class="sub">Source reservoir</div>
+        <div id="sumpLow" class="low hidden">Low</div>
         <div class="big green" id="sumpPct">--%</div>
         <div class="muted" id="sumpLitres">Level: -- L</div>
-        <div class="muted">Source reservoir</div>
-      </div>
-
-      <div class="card span2">
-        <h2>Sensor diagnostics</h2>
-        <div class="mini">
-          <div class="pill">
-            <div class="label">Raw sensor value</div>
-            <div class="value" id="rawValue">--</div>
-          </div>
-
-          <div class="pill">
-            <div class="label">Saved calibration</div>
-            <div class="value" id="savedCal" style="font-size:16px;">Dry: -- | Full: --</div>
-          </div>
-        </div>
-
-        <div class="row">
-          <button class="amber" onclick="cmdCalLow()">CALIBRATE LOW / DRY (0%)</button>
-          <button class="green" onclick="cmdCalFull()">CALIBRATE FULL / WET (100%)</button>
-        </div>
-
-        <div class="msg" id="calMsg"></div>
-
-        <div class="note">
-          LOW: press when sensor is dry / at empty level.<br />
-          FULL: press when sump is physically at the level you want to treat as 100%.
-        </div>
       </div>
 
       <div class="card">
@@ -410,14 +396,50 @@
         <div class="row">
           <button onclick="cmdFill(1)">💧 Fill Hitachi</button>
           <button class="red" onclick="cmdFill(2)">💧 Fill Kaveri</button>
-          <button class="gray" onclick="cmdStop()">STOP ALL</button>
         </div>
+        <div class="muted">Momentary trigger</div>
         <div class="msg" id="actionMsg"></div>
       </div>
     </div>
 
+    <div style="text-align:center; margin-top:16px;">
+      <button class="gray" onclick="toggleCalMenu()" style="max-width:520px;">
+        ⚙️ OPEN CONFIGURATION MENU
+      </button>
+    </div>
+
+    <div id="calMenu" class="hidden" style="max-width:860px;margin:12px auto;">
+      <div class="card">
+        <h2>Sensor diagnostics</h2>
+
+        <div class="mini">
+          <div class="pill">
+            <div class="label">Raw sensor value</div>
+            <div class="value" id="rawValue">--</div>
+          </div>
+
+          <div class="pill">
+            <div class="label">Saved calibration</div>
+            <div class="value" id="savedCal" style="font-size:16px;">Dry: -- | Full: --</div>
+          </div>
+        </div>
+
+        <div class="row">
+          <button class="amber" onclick="cmdCalLow()">CALIBRATE LOW / DRY (0%)</button>
+          <button class="green" onclick="cmdCalFull()">CALIBRATE FULL / WET (100%)</button>
+        </div>
+
+        <div class="msg" id="calMsg"></div>
+
+        <div class="note">
+          LOW: press when sensor is dry / empty.<br>
+          FULL: press when sump is physically at the level you want to treat as 100%.
+        </div>
+      </div>
+    </div>
+
     <div class="footer">
-      Water Intelligence · fob node mirror · polling 2s
+      Building Water · fob node mirror · polling 2s
     </div>
   </div>
 
@@ -428,10 +450,10 @@
     const FB_HOST = "https://watermonitor-ace8e-default-rtdb.asia-southeast1.firebasedatabase.app";
     const FB_AUTH = "AIzaSyAWzWVuFyeAq7WEV7ZrY2ic0akuPYV2Ndw";
 
-    // Replace this with your real Telegram bot username.
-    const TELEGRAM_BOT_USERNAME = "YOUR_BOT_USERNAME";
+    // CHANGE THIS to your actual Telegram bot username
+    const TELEGRAM_BOT_USERNAME = "@Botwaterlevelmonitor_bot";
 
-    let userName = localStorage.getItem("waterUserName") || "";
+    let userName = localStorage.getItem("@Botwaterlevelmonitor_bot") || "";
     let pollTimer = null;
     let pageOpenedSent = false;
 
@@ -475,6 +497,23 @@
     function calMsg(text) {
       set("calMsg", text);
       setTimeout(() => set("calMsg", ""), 6000);
+    }
+
+    function setLow(id, pct) {
+      const el = $(id);
+      if (!el) return;
+
+      if (pct >= 1 && pct < 10) {
+        el.classList.remove("hidden");
+      } else {
+        el.classList.add("hidden");
+      }
+    }
+
+    function toggleCalMenu() {
+      const m = $("calMenu");
+      if (!m) return;
+      m.classList.toggle("hidden");
     }
 
     // ============================================================
@@ -526,7 +565,7 @@
     }
 
     function telegramSubscribe() {
-      if (TELEGRAM_BOT_USERNAME === "YOUR_BOT_USERNAME") {
+      if (TELEGRAM_BOT_USERNAME === "@Botwaterlevelmonitor_bot") {
         alert("Edit index.html and replace TELEGRAM_BOT_USERNAME with your actual Telegram bot username.");
         return;
       }
@@ -543,14 +582,6 @@
       })
       .then(() => actionMsg("Fill command sent."))
       .catch(() => actionMsg("Fill command failed."));
-    }
-
-    function cmdStop() {
-      fbPatch({
-        fillingMode: 3
-      })
-      .then(() => actionMsg("Stop command sent."))
-      .catch(() => actionMsg("Stop command failed."));
     }
 
     function cmdResetDaily() {
@@ -577,7 +608,7 @@
       fbPatch({
         calLowCmd: 1
       })
-      .then(() => calMsg("Low/dry calibration command sent. Keep sensor at dry/low level until saved."))
+      .then(() => calMsg("Low/dry calibration command sent."))
       .catch(() => calMsg("Low calibration command failed."));
     }
 
@@ -585,7 +616,7 @@
       fbPatch({
         calFullCmd: 1
       })
-      .then(() => calMsg("Full/wet calibration command sent. Keep sump at full level until saved."))
+      .then(() => calMsg("Full/wet calibration command sent."))
       .catch(() => calMsg("Full calibration command failed."));
     }
 
@@ -617,14 +648,22 @@
         $("statusBar").textContent = statusText;
         $("statusBar").className = "status-bar " + (alive ? "connected" : "disconnected");
 
-        set("hitachiPct", (Number(d.hitachiPct) || 0) + "%");
+        const hitachiPct = Number(d.hitachiPct) || 0;
+        const kaveriPct = Number(d.kaveriPct) || 0;
+        const sumpPct = Number(d.sumpPct) || 0;
+
+        set("hitachiPct", hitachiPct + "%");
         set("hitachiLitres", "Level: " + (Number(d.hitachiLitres) || 0) + " L");
 
-        set("kaveriPct", (Number(d.kaveriPct) || 0) + "%");
+        set("kaveriPct", kaveriPct + "%");
         set("kaveriLitres", "Level: " + (Number(d.kaveriLitres) || 0) + " L");
 
-        set("sumpPct", (Number(d.sumpPct) || 0) + "%");
+        set("sumpPct", sumpPct + "%");
         set("sumpLitres", "Level: " + (Number(d.sumpLitres) || 0) + " L");
+
+        setLow("hitachiLow", hitachiPct);
+        setLow("kaveriLow", kaveriPct);
+        setLow("sumpLow", sumpPct);
 
         set("rawValue", Number(d.sumpRaw) || 0);
         set("savedCal", "Dry: " + (Number(d.calDry) || 0) + " | Full: " + (Number(d.calWet) || 0));
