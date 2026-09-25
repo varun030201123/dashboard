@@ -4,203 +4,138 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-  <meta http-equiv="Pragma" content="no-cache" />
-  <meta http-equiv="Expires" content="0" />
   <title>Building Water</title>
   <style>
     :root { --bg: #071120; --panel: #0f1d33; --panel2: #13253f; --line: #26425f; --text: #eef6ff; --muted: #93a7bd; --blue: #3b82f6; --green: #10b981; --red: #ef4444; --amber: #f59e0b; }
-    * { box-sizing: border-box; }
-    body { margin: 0; padding: 18px; background: var(--bg); color: var(--text); font-family: Inter, Segoe UI, Roboto, Arial, sans-serif; min-height: 100vh; }
-    .app { max-width: 860px; margin: 0 auto; }
-    .topbar { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 14px; }
-    h1 { margin: 0; font-size: 26px; letter-spacing: 0.2px; }
-    .sub { color: var(--muted); font-size: 13px; margin-top: 4px; }
-    .user-badge { background: rgba(59, 130, 246, 0.14); color: #cfe4ff; border: 1px solid rgba(59, 130, 246, 0.35); padding: 8px 12px; border-radius: 999px; font-size: 13px; white-space: nowrap; }
-    .status-bar { padding: 12px 14px; border-radius: 12px; font-weight: 700; font-size: 13px; letter-spacing: 0.3px; margin-bottom: 14px; border: 1px solid transparent; }
+    * { box-sizing: border-box; } body { margin: 0; padding: 18px; background: var(--bg); color: var(--text); font-family: Inter, sans-serif; min-height: 100vh; }
+    .app { max-width: 860px; margin: 0 auto; } .topbar { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 14px; }
+    h1 { margin: 0; font-size: 26px; } .sub { color: var(--muted); font-size: 13px; margin-top: 4px; }
+    .user-badge { background: rgba(59, 130, 246, 0.14); color: #cfe4ff; border: 1px solid rgba(59, 130, 246, 0.35); padding: 8px 12px; border-radius: 999px; font-size: 13px; }
+    .status-bar { padding: 12px 14px; border-radius: 12px; font-weight: 700; font-size: 13px; margin-bottom: 14px; border: 1px solid transparent; }
     .connected { background: rgba(16, 185, 129, 0.14); color: #b9f5e4; border-color: rgba(16, 185, 129, 0.35); }
     .disconnected { background: rgba(239, 68, 68, 0.14); color: #ffd9d9; border-color: rgba(239, 68, 68, 0.35); }
-    .grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
-    @media (min-width: 760px) { .grid { grid-template-columns: 1fr 1fr; } .span2 { grid-column: span 2; } }
-    .card { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 16px; box-shadow: 0 8px 26px rgba(0, 0, 0, 0.18); }
-    .card h2 { margin: 0 0 8px; font-size: 16px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; }
-    .big { font-size: 36px; font-weight: 800; color: var(--blue); line-height: 1.1; }
-    .big.green { color: var(--green); }
-    .muted { color: var(--muted); font-size: 13px; line-height: 1.45; }
-    .row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+    .grid { display: grid; grid-template-columns: 1fr; gap: 12px; } @media (min-width: 760px) { .grid { grid-template-columns: 1fr 1fr; } .span2 { grid-column: span 2; } }
+    .card { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 16px; }
+    .card h2 { margin: 0 0 8px; font-size: 16px; color: var(--muted); text-transform: uppercase; }
+    .big { font-size: 36px; font-weight: 800; color: var(--blue); } .big.green { color: var(--green); }
+    .muted { color: var(--muted); font-size: 13px; } .row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
     button { border: 0; border-radius: 12px; padding: 12px 14px; color: white; font-weight: 800; cursor: pointer; background: var(--blue); flex: 1; min-width: 140px; }
-    button:active { transform: translateY(1px); }
     button.green { background: var(--green); } button.red { background: var(--red); } button.amber { background: var(--amber); color: #201500; } button.gray { background: #33475c; }
     .mini { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
     .pill { background: var(--panel2); border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
-    .pill .label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 6px; }
-    .pill .value { font-size: 22px; font-weight: 800; }
-    .banner { display: none; background: rgba(239, 68, 68, 0.16); border: 1px solid rgba(239, 68, 68, 0.4); color: #ffd9d9; border-radius: 12px; padding: 11px 13px; font-size: 12px; font-weight: 800; letter-spacing: 0.4px; margin-bottom: 14px; text-transform: uppercase; }
-    .footer { margin-top: 18px; color: var(--muted); font-size: 12px; text-align: center; }
-    #nameOverlay { position: fixed; inset: 0; background: rgba(3, 8, 16, 0.82); backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 50; }
-    .nameCard { width: min(560px, 100%); background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 22px; box-shadow: 0 14px 50px rgba(0, 0, 0, 0.35); }
-    input[type="text"] { width: 100%; margin-top: 12px; padding: 13px 14px; border-radius: 12px; border: 1px solid var(--line); background: #081120; color: var(--text); outline: none; font-size: 16px; }
-    .hidden { display: none !important; }
-    .note { margin-top: 12px; color: var(--muted); font-size: 13px; line-height: 1.5; }
-    .msg { margin-top: 10px; color: #cfe4ff; font-size: 13px; font-weight: 700; min-height: 18px; }
-    .low { display: inline-block; background: rgba(239, 68, 68, 0.16); color: #ffd9d9; border: 1px solid rgba(239, 68, 68, 0.35); border-radius: 999px; font-size: 11px; font-weight: 800; padding: 4px 10px; margin-bottom: 8px; }
+    .pill .label { color: var(--muted); font-size: 11px; text-transform: uppercase; margin-bottom: 6px; } .pill .value { font-size: 22px; font-weight: 800; }
+    .banner { display: none; background: rgba(239, 68, 68, 0.16); border: 1px solid rgba(239, 68, 68, 0.4); color: #ffd9d9; border-radius: 12px; padding: 11px 13px; font-size: 12px; font-weight: 800; margin-bottom: 14px; }
+    #nameOverlay { position: fixed; inset: 0; background: rgba(3, 8, 16, 0.82); display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 50; }
+    .nameCard { width: min(560px, 100%); background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 22px; }
+    input { width: 100%; margin-top: 12px; padding: 13px; border-radius: 12px; border: 1px solid var(--line); background: #081120; color: var(--text); font-size: 16px; }
+    .hidden { display: none !important; } .msg { margin-top: 10px; color: #cfe4ff; font-size: 13px; font-weight: 700; min-height: 18px; }
   </style>
 </head>
 <body>
-
   <div id="nameOverlay">
     <div class="nameCard">
-      <h1>Welcome</h1>
-      <div class="sub">Please enter your name to continue.</div>
+      <h1>Welcome</h1><div class="sub">Please enter your name.</div>
       <input id="nameInput" type="text" placeholder="Your name" />
       <div class="row"><button onclick="continueApp()">Continue</button></div>
-      <div class="note">Optional: get notified when the sump is full. Opens Telegram — tap Start there once, and you'll get a message whenever the sump tank hits 100%.</div>
-      <div class="row"><button class="gray" onclick="telegramSubscribe()">Notify me on Telegram</button></div>
+      <div class="row" style="margin-top:10px"><button class="gray" onclick="telegramSubscribe()">Notify me on Telegram</button></div>
     </div>
   </div>
 
   <div id="app" class="app hidden">
-    <div class="topbar">
-      <div><h1>Building Water</h1><div class="sub">Live telemetry mirror</div></div>
-      <div class="user-badge" id="userBadge">Guest</div>
-    </div>
-    <div id="statusBar" class="status-bar disconnected">Connecting… Updated: --</div>
+    <div class="topbar"><div><h1>Building Water</h1><div class="sub">Live telemetry</div></div><div class="user-badge" id="userBadge">Guest</div></div>
+    <div id="statusBar" class="status-bar disconnected">Connecting…</div>
     <div id="fillBanner" class="banner">Motor standby</div>
     <div class="grid">
-      <div class="card"><h2>Hitachi Tank</h2><div class="sub">Overhead storage</div><div id="hitachiLow" class="low hidden">Low</div><div class="big" id="hitachiPct">--%</div><div class="muted" id="hitachiLitres">Level: -- L</div></div>
-      <div class="card"><h2>Kaveri Tank</h2><div class="sub">Overhead storage</div><div id="kaveriLow" class="low hidden">Low</div><div class="big" id="kaveriPct">--%</div><div class="muted" id="kaveriLitres">Level: -- L</div></div>
-      <div class="card span2"><h2>Underground Sump</h2><div class="sub">Source reservoir</div><div id="sumpLow" class="low hidden">Low</div><div class="big green" id="sumpPct">--%</div><div class="muted" id="sumpLitres">Level: -- L</div></div>
-      <div class="card"><h2>Sump-Full Alerts</h2><div class="muted">Optional — get a Telegram message when the sump hits 100%.</div><div class="row"><button class="gray" onclick="telegramSubscribe()">Notify me on Telegram</button></div></div>
-      <div class="card"><h2>Corp. Water Inflow</h2><div class="muted">Last known supply start</div><div class="big" id="corpStart" style="font-size:20px;">Waiting for rise...</div><div class="muted" id="corpActive">Stable</div></div>
-      <div class="card"><h2>Today's Draw</h2><div class="big" id="dailyDraw">-- L</div><div class="row"><button class="gray" onclick="cmdResetDaily()">Reset Day</button></div></div>
-      <div class="card"><h2>This Month</h2><div class="big" id="monthlyDraw">-- L</div><div class="muted">Since 1st</div><div class="row"><button class="gray" onclick="cmdResetMonthly()">Reset Month</button></div></div>
+      <div class="card"><h2>Hitachi Tank</h2><div class="big" id="hitachiPct">--%</div><div class="muted" id="hitachiLitres">-- L</div></div>
+      <div class="card"><h2>Kaveri Tank</h2><div class="big" id="kaveriPct">--%</div><div class="muted" id="kaveriLitres">-- L</div></div>
+      <div class="card span2"><h2>Underground Sump</h2><div class="big green" id="sumpPct">--%</div><div class="muted" id="sumpLitres">-- L</div></div>
+      <div class="card"><h2>Sump Alerts</h2><div class="muted">Get notified on Telegram.</div><div class="row"><button class="gray" onclick="telegramSubscribe()">Notify me</button></div></div>
+      <div class="card"><h2>Corp. Water</h2><div class="big" id="corpStart" style="font-size:20px;">Waiting...</div><div class="muted" id="corpActive">Stable</div></div>
+      <div class="card"><h2>Today</h2><div class="big" id="dailyDraw">-- L</div><div class="row"><button class="gray" onclick="cmdResetDaily()">Reset Day</button></div></div>
+      <div class="card"><h2>Month</h2><div class="big" id="monthlyDraw">-- L</div><div class="row"><button class="gray" onclick="cmdResetMonthly()">Reset Month</button></div></div>
       <div class="card span2">
         <h2>Manual Fill Override</h2>
-        <div class="row">
-          <button onclick="cmdFill(1)">Fill Hitachi</button>
-          <button class="red" onclick="cmdFill(2)">Fill Kaveri</button>
-        </div>
-        <div class="muted">Momentary trigger (3s pulse)</div>
-        <div class="msg" id="actionMsg"></div>
+        <div class="row"><button onclick="cmdFill(1)">Fill Hitachi</button><button class="red" onclick="cmdFill(2)">Fill Kaveri</button></div>
+        <div class="muted">1-second momentary pulse</div><div class="msg" id="actionMsg"></div>
       </div>
     </div>
-    <div style="text-align:center; margin-top:16px;"><button class="gray" onclick="toggleCalMenu()" style="max-width:520px;">OPEN CONFIGURATION MENU</button></div>
-    <div id="calMenu" class="hidden" style="max-width:860px;margin:12px auto;">
+    <div style="text-align:center; margin-top:16px;"><button class="gray" onclick="toggleCalMenu()">OPEN CONFIGURATION MENU</button></div>
+    <div id="calMenu" class="hidden" style="margin:12px auto;">
       <div class="card">
-        <h2>Sensor diagnostics</h2>
+        <h2>Diagnostics</h2>
         <div class="mini">
-          <div class="pill"><div class="label">Raw sensor value</div><div class="value" id="rawValue">--</div></div>
-          <div class="pill"><div class="label">Saved calibration</div><div class="value" id="savedCal" style="font-size:16px;">Dry: -- | Full: --</div></div>
+          <div class="pill"><div class="label">Raw</div><div class="value" id="rawValue">--</div></div>
+          <div class="pill"><div class="label">Cal</div><div class="value" id="savedCal" style="font-size:16px;">--</div></div>
         </div>
-        <div class="row">
-          <button class="amber" onclick="cmdCalLow()">CALIBRATE LOW / DRY (0%)</button>
-          <button class="green" onclick="cmdCalFull()">CALIBRATE FULL / WET (100%)</button>
-        </div>
+        <div class="row"><button class="amber" onclick="cmdCalLow()">CAL LOW</button><button class="green" onclick="cmdCalFull()">CAL FULL</button></div>
         <div class="msg" id="calMsg"></div>
-        <div class="note">LOW: press when sensor is dry / empty.<br>FULL: press when sump is physically at the level you want to treat as 100%.</div>
       </div>
     </div>
-    <div class="footer">Building Water · telemetry mirror</div>
   </div>
 
   <script>
     const FB_HOST = "https://watermonitor-ace8e-default-rtdb.asia-southeast1.firebasedatabase.app";
     const FB_AUTH = "AIzaSyAWzWVuFyeAq7WEV7ZrY2ic0akuPYV2Ndw";
-    const TELEGRAM_BOT_USERNAME = "Botwaterlevelmonitor_bot";
-
-    let userName = "";
+    let userName = localStorage.getItem("waterUserName") || "";
     let pollTimer = null;
-    let pageOpenedSent = false;
-
-    function setCookie(name, value, days) { try { let expires = ""; if (days) { const d = new Date(); d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000)); expires = "; expires=" + d.toUTCString(); } document.cookie = name + "=" + encodeURIComponent(value) + expires + "; path=/; SameSite=Lax"; } catch (e) {} }
-    function getCookie(name) { try { const cname = name + "="; const parts = document.cookie.split(";"); for (let p of parts) { p = p.trim(); if (p.indexOf(cname) === 0) return decodeURIComponent(p.substring(cname.length)); } } catch (e) {} return ""; }
-    function loadName() { try { const keys = ["waterUserName", "userName", "user_name", "name"]; for (const k of keys) { const v = localStorage.getItem(k); if (v && String(v).trim()) return String(v).trim(); } } catch (e) {} const c = getCookie("waterUserName") || getCookie("userName"); if (c && String(c).trim()) { const name = String(c).trim(); try { localStorage.setItem("waterUserName", name); localStorage.setItem("userName", name); } catch (e) {} return name; } return ""; }
-    function saveName(name) { userName = name; try { localStorage.setItem("waterUserName", name); localStorage.setItem("userName", name); } catch (e) {} setCookie("waterUserName", name, 3650); setCookie("userName", name, 3650); }
 
     function $(id) { return document.getElementById(id); }
-    function set(id, value) { const el = $(id); if (el) el.textContent = value; }
-    function actor() { return userName || "GitHub page"; }
+    function set(id, val) { if ($(id)) $(id).textContent = val; }
     function fbUrl() { return FB_HOST + "/telemetry.json?auth=" + encodeURIComponent(FB_AUTH); }
     
     function fbPatch(obj) {
-      obj.lastActionBy = actor();
-      return fetch(fbUrl(), {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(obj),
-        cache: "no-store" // Prevents WebView caching errors
-      });
+      obj.lastActionBy = userName || "web";
+      return fetch(fbUrl(), { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(obj), cache: "no-store" });
     }
 
-    function actionMsg(text) { set("actionMsg", text); setTimeout(() => set("actionMsg", ""), 6000); }
-    function calMsg(text) { set("calMsg", text); setTimeout(() => set("calMsg", ""), 6000); }
-    function setLow(id, pct) { const el = $(id); if (!el) return; if (pct >= 1 && pct < 10) el.classList.remove("hidden"); else el.classList.add("hidden"); }
-    function toggleCalMenu() { const m = $("calMenu"); if (!m) return; m.classList.toggle("hidden"); }
+    function actionMsg(t) { set("actionMsg", t); setTimeout(() => set("actionMsg", ""), 4000); }
+    function calMsg(t) { set("calMsg", t); setTimeout(() => set("calMsg", ""), 4000); }
+    function toggleCalMenu() { $("calMenu").classList.toggle("hidden"); }
 
     function startApp() {
       $("nameOverlay").classList.add("hidden"); $("app").classList.remove("hidden"); $("userBadge").textContent = userName || "Guest";
-      if (!pageOpenedSent) { pageOpenedSent = true; fbPatch({ pageOpenedFlag: 1, pageOpenedBy: actor() }).catch(() => {}); }
-      if (!pollTimer) { refresh(); pollTimer = setInterval(refresh, 5000); } // 5s is safer for WebIntoApp WebViews
+      fbPatch({ pageOpenedFlag: 1, pageOpenedBy: userName }).catch(()=>{});
+      if (!pollTimer) { refresh(); pollTimer = setInterval(refresh, 3000); }
     }
 
     async function continueApp() {
-      const name = $("nameInput").value.trim();
-      if (!name) { alert("Please enter your name."); return; }
-      saveName(name);
-      try { await fetch(FB_HOST + "/registeredUsers/" + Date.now() + ".json?auth=" + encodeURIComponent(FB_AUTH), { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(name) }); } catch (e) {}
-      startApp();
+      const n = $("nameInput").value.trim(); if (!n) return alert("Enter name");
+      userName = n; localStorage.setItem("waterUserName", n); startApp();
     }
 
-    function telegramSubscribe() {
-      const u = TELEGRAM_BOT_USERNAME.replace(/^@/, "");
-      const url = "https://t.me/" + u + "?start=subscribe_sump";
-      // Fallback for WebViews that block window.open
-      window.location.href = url;
-    }
+    function telegramSubscribe() { window.location.href = "https://t.me/Botwaterlevelmonitor_bot?start=subscribe_sump"; }
 
-    function cmdFill(mode) {
-      const tankName = mode === 1 ? "Hitachi" : "Kaveri";
-      fbPatch({ fillingMode: mode })
-        .then(() => actionMsg("Fill " + tankName + " command sent."))
-        .catch(() => actionMsg("Failed to send command. Check connection."));
+    // DEDICATED COMMAND FLAGS (Fixes the random button issue)
+    function cmdFill(m) { 
+      const p = m === 1 ? { cmdFillHitachi: 1 } : { cmdFillKaveri: 1 };
+      fbPatch(p).then(() => actionMsg("Command sent!")).catch(() => actionMsg("Failed"));
     }
-
-    function cmdResetDaily() { if (!confirm("Reset today's consumption to 0?")) return; fbPatch({ resetDaily: 1 }).then(() => actionMsg("Daily reset sent.")).catch(() => actionMsg("Reset failed.")); }
-    function cmdResetMonthly() { if (!confirm("Reset monthly consumption to 0?")) return; fbPatch({ resetMonthly: 1 }).then(() => actionMsg("Monthly reset sent.")).catch(() => actionMsg("Reset failed.")); }
-    function cmdCalLow() { fbPatch({ calLowCmd: 1 }).then(() => calMsg("Low/dry calibration sent.")).catch(() => calMsg("Failed.")); }
-    function cmdCalFull() { fbPatch({ calFullCmd: 1 }).then(() => calMsg("Full/wet calibration sent.")).catch(() => calMsg("Failed.")); }
+    function cmdResetDaily() { fbPatch({ cmdResetDaily: 1 }).then(() => actionMsg("Reset sent")); }
+    function cmdResetMonthly() { fbPatch({ cmdResetMonthly: 1 }).then(() => actionMsg("Reset sent")); }
+    function cmdCalLow() { fbPatch({ cmdCalLow: 1 }).then(() => calMsg("Sent")); }
+    function cmdCalFull() { fbPatch({ cmdCalFull: 1 }).then(() => calMsg("Sent")); }
 
     async function refresh() {
       try {
-        const res = await fetch(fbUrl(), { method: "GET", cache: "no-store" });
-        if (!res.ok) throw new Error("HTTP " + res.status);
-        const d = await res.json();
-        if (!d) throw new Error("Empty");
-        const nowSec = Math.floor(Date.now() / 1000);
-        const age = d.lastSeenEpoch ? (nowSec - d.lastSeenEpoch) : 99999;
-        const alive = age < 30;
-        $("statusBar").textContent = alive ? "Live telemetry · Updated: " + new Date(d.lastSeenEpoch * 1000).toLocaleTimeString() : "Connecting… / ESP32 offline";
+        const r = await fetch(fbUrl(), { cache: "no-store" }); const d = await r.json();
+        const alive = d.lastSeenEpoch && (Math.floor(Date.now()/1000) - d.lastSeenEpoch < 30);
+        $("statusBar").textContent = alive ? "Live · " + new Date(d.lastSeenEpoch*1000).toLocaleTimeString() : "Offline";
         $("statusBar").className = "status-bar " + (alive ? "connected" : "disconnected");
-        const hitachiPct = Number(d.hitachiPct) || 0; const kaveriPct = Number(d.kaveriPct) || 0; const sumpPct = Number(d.sumpPct) || 0;
-        set("hitachiPct", hitachiPct + "%"); set("hitachiLitres", "Level: " + (Number(d.hitachiLitres) || 0) + " L");
-        set("kaveriPct", kaveriPct + "%"); set("kaveriLitres", "Level: " + (Number(d.kaveriLitres) || 0) + " L");
-        set("sumpPct", sumpPct + "%"); set("sumpLitres", "Level: " + (Number(d.sumpLitres) || 0) + " L");
-        setLow("hitachiLow", hitachiPct); setLow("kaveriLow", kaveriPct); setLow("sumpLow", sumpPct);
-        set("rawValue", Number(d.sumpRaw) || 0); set("savedCal", "Dry: " + (Number(d.calDry) || 0) + " | Full: " + (Number(d.calWet) || 0));
-        set("corpStart", d.corpWaterStart || "Waiting for rise..."); set("corpActive", Number(d.corpInflowActive) === 1 ? "ACTIVE INFLOW" : "Stable");
-        set("dailyDraw", (Number(d.dailyConsumption) || 0) + " L"); set("monthlyDraw", (Number(d.monthlyConsumption) || 0) + " L");
-        const banner = $("fillBanner");
-        if (Number(d.fillingMode) === 1) { banner.style.display = "block"; banner.textContent = "MOTOR STARTED: HITACHI MOTOR ON"; }
-        else if (Number(d.fillingMode) === 2) { banner.style.display = "block"; banner.textContent = "MOTOR STARTED: KAVERI MOTOR ON"; }
-        else { banner.style.display = "none"; }
-      } catch (e) {
-        $("statusBar").textContent = "Connecting… / offline";
-        $("statusBar").className = "status-bar disconnected";
-      }
+        set("hitachiPct", (d.hitachiPct||0)+"%"); set("hitachiLitres", (d.hitachiLitres||0)+" L");
+        set("kaveriPct", (d.kaveriPct||0)+"%"); set("kaveriLitres", (d.kaveriLitres||0)+" L");
+        set("sumpPct", (d.sumpPct||0)+"%"); set("sumpLitres", (d.sumpLitres||0)+" L");
+        set("rawValue", d.sumpRaw||0); set("savedCal", "D:"+(d.calDry||0)+" W:"+(d.calWet||0));
+        set("corpStart", d.corpWaterStart||"Waiting"); set("corpActive", d.corpInflowActive?"ACTIVE":"Stable");
+        set("dailyDraw", (d.dailyConsumption||0)+" L"); set("monthlyDraw", (d.monthlyConsumption||0)+" L");
+        const b = $("fillBanner");
+        if (d.fillingMode === 1) { b.style.display="block"; b.textContent="HITACHI MOTOR ON (1s Pulse)"; }
+        else if (d.fillingMode === 2) { b.style.display="block"; b.textContent="KAVERI MOTOR ON (1s Pulse)"; }
+        else { b.style.display="none"; }
+      } catch(e) { $("statusBar").textContent = "Offline"; $("statusBar").className = "status-bar disconnected"; }
     }
 
-    document.addEventListener("DOMContentLoaded", function() {
-      userName = loadName();
-      const input = $("nameInput"); if (input) input.value = userName;
+    window.addEventListener("load", () => {
+      if ($("nameInput")) $("nameInput").value = userName;
       if (userName) startApp(); else $("nameOverlay").classList.remove("hidden");
     });
   </script>
