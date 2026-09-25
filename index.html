@@ -81,11 +81,18 @@
 
     function $(id) { return document.getElementById(id); }
     function set(id, val) { if ($(id)) $(id).textContent = val; }
-    function fbUrl() { return FB_HOST + "/telemetry.json?auth=" + encodeURIComponent(FB_AUTH); }
+    
+    // CACHE BUSTING FIX FOR WEBVIEW
+    function fbUrl() { return FB_HOST + "/telemetry.json?auth=" + encodeURIComponent(FB_AUTH) + "&t=" + Date.now(); }
     
     function fbPatch(obj) {
       obj.lastActionBy = userName || "web";
-      return fetch(fbUrl(), { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(obj), cache: "no-store" });
+      return fetch(fbUrl(), { 
+        method: "PATCH", 
+        headers: { "Content-Type": "application/json" }, 
+        body: JSON.stringify(obj), 
+        cache: "no-store" 
+      });
     }
 
     function actionMsg(t) { set("actionMsg", t); setTimeout(() => set("actionMsg", ""), 4000); }
@@ -105,7 +112,6 @@
 
     function telegramSubscribe() { window.location.href = "https://t.me/Botwaterlevelmonitor_bot?start=subscribe_sump"; }
 
-    // DEDICATED COMMAND FLAGS (Fixes the random button issue)
     function cmdFill(m) { 
       const p = m === 1 ? { cmdFillHitachi: 1 } : { cmdFillKaveri: 1 };
       fbPatch(p).then(() => actionMsg("Command sent!")).catch(() => actionMsg("Failed"));
