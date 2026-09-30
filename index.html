@@ -3,146 +3,1042 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+
   <title>Building Water</title>
+
   <style>
-    :root { --bg: #071120; --panel: #0f1d33; --panel2: #13253f; --line: #26425f; --text: #eef6ff; --muted: #93a7bd; --blue: #3b82f6; --green: #10b981; --red: #ef4444; --amber: #f59e0b; }
-    * { box-sizing: border-box; } body { margin: 0; padding: 18px; background: var(--bg); color: var(--text); font-family: Inter, sans-serif; min-height: 100vh; }
-    .app { max-width: 860px; margin: 0 auto; } .topbar { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 14px; }
-    h1 { margin: 0; font-size: 26px; } .sub { color: var(--muted); font-size: 13px; margin-top: 4px; }
-    .user-badge { background: rgba(59, 130, 246, 0.14); color: #cfe4ff; border: 1px solid rgba(59, 130, 246, 0.35); padding: 8px 12px; border-radius: 999px; font-size: 13px; }
-    .status-bar { padding: 12px 14px; border-radius: 12px; font-weight: 700; font-size: 13px; margin-bottom: 14px; border: 1px solid transparent; }
-    .connected { background: rgba(16, 185, 129, 0.14); color: #b9f5e4; border-color: rgba(16, 185, 129, 0.35); }
-    .disconnected { background: rgba(239, 68, 68, 0.14); color: #ffd9d9; border-color: rgba(239, 68, 68, 0.35); }
-    .grid { display: grid; grid-template-columns: 1fr; gap: 12px; } @media (min-width: 760px) { .grid { grid-template-columns: 1fr 1fr; } .span2 { grid-column: span 2; } }
-    .card { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 16px; }
-    .card h2 { margin: 0 0 8px; font-size: 16px; color: var(--muted); text-transform: uppercase; }
-    .big { font-size: 36px; font-weight: 800; color: var(--blue); } .big.green { color: var(--green); }
-    .muted { color: var(--muted); font-size: 13px; } .row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
-    button { border: 0; border-radius: 12px; padding: 12px 14px; color: white; font-weight: 800; cursor: pointer; background: var(--blue); flex: 1; min-width: 140px; }
-    button.green { background: var(--green); } button.red { background: var(--red); } button.amber { background: var(--amber); color: #201500; } button.gray { background: #33475c; }
-    .mini { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
-    .pill { background: var(--panel2); border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
-    .pill .label { color: var(--muted); font-size: 11px; text-transform: uppercase; margin-bottom: 6px; } .pill .value { font-size: 22px; font-weight: 800; }
-    .banner { display: none; background: rgba(239, 68, 68, 0.16); border: 1px solid rgba(239, 68, 68, 0.4); color: #ffd9d9; border-radius: 12px; padding: 11px 13px; font-size: 12px; font-weight: 800; margin-bottom: 14px; }
-    #nameOverlay { position: fixed; inset: 0; background: rgba(3, 8, 16, 0.82); display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 50; }
-    .nameCard { width: min(560px, 100%); background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 22px; }
-    input { width: 100%; margin-top: 12px; padding: 13px; border-radius: 12px; border: 1px solid var(--line); background: #081120; color: var(--text); font-size: 16px; }
-    .hidden { display: none !important; } .msg { margin-top: 10px; color: #cfe4ff; font-size: 13px; font-weight: 700; min-height: 18px; }
+    :root {
+      --bg: #071120;
+      --panel: #0f1d33;
+      --panel2: #13253f;
+      --line: #26425f;
+      --text: #eef6ff;
+      --muted: #93a7bd;
+      --blue: #3b82f6;
+      --green: #10b981;
+      --red: #ef4444;
+      --amber: #f59e0b;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 18px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, Segoe UI, Roboto, Arial, sans-serif;
+      min-height: 100vh;
+    }
+
+    .app {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 26px;
+      letter-spacing: 0.2px;
+    }
+
+    .sub {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 4px;
+    }
+
+    .user-badge {
+      background: rgba(59, 130, 246, 0.14);
+      color: #cfe4ff;
+      border: 1px solid rgba(59, 130, 246, 0.35);
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .status-bar {
+      padding: 12px 14px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: 0.3px;
+      margin-bottom: 14px;
+      border: 1px solid transparent;
+      text-align: center;
+    }
+
+    .connected {
+      background: rgba(16, 185, 129, 0.14);
+      color: #b9f5e4;
+      border-color: rgba(16, 185, 129, 0.35);
+    }
+
+    .disconnected {
+      background: rgba(239, 68, 68, 0.14);
+      color: #ffd9d9;
+      border-color: rgba(239, 68, 68, 0.35);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    @media (min-width: 760px) {
+      .grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .span2 {
+        grid-column: span 2;
+      }
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 8px 26px rgba(0, 0, 0, 0.18);
+    }
+
+    .card h2 {
+      margin: 0 0 8px;
+      font-size: 16px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    .big {
+      font-size: 36px;
+      font-weight: 800;
+      color: var(--blue);
+      line-height: 1.1;
+    }
+
+    .big.green {
+      color: var(--green);
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 12px 14px;
+      color: white;
+      font-weight: 800;
+      cursor: pointer;
+      background: var(--blue);
+      flex: 1;
+      min-width: 140px;
+    }
+
+    button:active {
+      transform: translateY(1px);
+    }
+
+    button.green {
+      background: var(--green);
+    }
+
+    button.red {
+      background: var(--red);
+    }
+
+    button.amber {
+      background: var(--amber);
+      color: #201500;
+    }
+
+    button.gray {
+      background: #33475c;
+    }
+
+    .mini {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .pill {
+      background: var(--panel2);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+    }
+
+    .pill .label {
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+      margin-bottom: 6px;
+    }
+
+    .pill .value {
+      font-size: 22px;
+      font-weight: 800;
+    }
+
+    .banner {
+      display: none;
+      background: rgba(239, 68, 68, 0.16);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      color: #ffd9d9;
+      border-radius: 12px;
+      padding: 11px 13px;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.4px;
+      margin-bottom: 14px;
+      text-transform: uppercase;
+      text-align: center;
+    }
+
+    .footer {
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 12px;
+      text-align: center;
+    }
+
+    #nameOverlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(3, 8, 16, 0.82);
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 50;
+    }
+
+    .nameCard {
+      width: min(560px, 100%);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 22px;
+      box-shadow: 0 14px 50px rgba(0, 0, 0, 0.35);
+    }
+
+    input[type="text"] {
+      width: 100%;
+      margin-top: 12px;
+      padding: 13px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: #081120;
+      color: var(--text);
+      outline: none;
+      font-size: 16px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .note {
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .msg {
+      margin-top: 10px;
+      color: #cfe4ff;
+      font-size: 13px;
+      font-weight: 700;
+      min-height: 18px;
+    }
+
+    .low {
+      display: inline-block;
+      background: rgba(239, 68, 68, 0.16);
+      color: #ffd9d9;
+      border: 1px solid rgba(239, 68, 68, 0.35);
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 4px 10px;
+      margin-bottom: 8px;
+    }
+
+    .plugFlex {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .plugButtons {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 0;
+    }
   </style>
 </head>
 <body>
+
+  <!-- NAME OVERLAY -->
   <div id="nameOverlay">
     <div class="nameCard">
-      <h1>Welcome</h1><div class="sub">Please enter your name.</div>
+      <h1>Welcome</h1>
+      <div class="sub">Please enter your name to continue.</div>
+
       <input id="nameInput" type="text" placeholder="Your name" />
-      <div class="row"><button onclick="continueApp()">Continue</button></div>
-      <div class="row" style="margin-top:10px"><button class="gray" onclick="telegramSubscribe()">Notify me on Telegram</button></div>
+
+      <div class="row">
+        <button onclick="continueApp()">Continue</button>
+      </div>
+
+      <div class="note">
+        Optional: get notified when the sump is full. Opens Telegram — tap Start there once,
+        and you will get a message whenever the sump tank hits 100%.
+      </div>
+
+      <div class="row">
+        <button class="gray" onclick="telegramSubscribe()">Notify me on Telegram</button>
+      </div>
     </div>
   </div>
 
+  <!-- MAIN APP -->
   <div id="app" class="app hidden">
-    <div class="topbar"><div><h1>Building Water</h1><div class="sub">Live telemetry</div></div><div class="user-badge" id="userBadge">Guest</div></div>
-    <div id="statusBar" class="status-bar disconnected">Connecting…</div>
-    <div id="fillBanner" class="banner">Motor standby</div>
+    <div class="topbar">
+      <div>
+        <h1>Building Water</h1>
+        <div class="sub">Live telemetry mirror + motor plug</div>
+      </div>
+      <div class="user-badge" id="userBadge">Guest</div>
+    </div>
+
+    <div id="waterStatus" class="status-bar disconnected">
+      Connecting…
+    </div>
+
+    <div id="fillBanner" class="banner">
+      Motor standby
+    </div>
+
     <div class="grid">
-      <div class="card"><h2>Hitachi Tank</h2><div class="big" id="hitachiPct">--%</div><div class="muted" id="hitachiLitres">-- L</div></div>
-      <div class="card"><h2>Kaveri Tank</h2><div class="big" id="kaveriPct">--%</div><div class="muted" id="kaveriLitres">-- L</div></div>
-      <div class="card span2"><h2>Underground Sump</h2><div class="big green" id="sumpPct">--%</div><div class="muted" id="sumpLitres">-- L</div></div>
-      <div class="card"><h2>Sump Alerts</h2><div class="muted">Get notified on Telegram.</div><div class="row"><button class="gray" onclick="telegramSubscribe()">Notify me</button></div></div>
-      <div class="card"><h2>Corp. Water</h2><div class="big" id="corpStart" style="font-size:20px;">Waiting...</div><div class="muted" id="corpActive">Stable</div></div>
-      <div class="card"><h2>Today</h2><div class="big" id="dailyDraw">-- L</div><div class="row"><button class="gray" onclick="cmdResetDaily()">Reset Day</button></div></div>
-      <div class="card"><h2>Month</h2><div class="big" id="monthlyDraw">-- L</div><div class="row"><button class="gray" onclick="cmdResetMonthly()">Reset Month</button></div></div>
+
+      <div class="card">
+        <h2>Hitachi Tank</h2>
+        <div class="sub">Overhead storage</div>
+        <div id="hitachiLow" class="low hidden">Low</div>
+        <div class="big" id="hitachiPct">--%</div>
+        <div class="muted" id="hitachiLitres">Level: -- L</div>
+      </div>
+
+      <div class="card">
+        <h2>Kaveri Tank</h2>
+        <div class="sub">Overhead storage</div>
+        <div id="kaveriLow" class="low hidden">Low</div>
+        <div class="big" id="kaveriPct">--%</div>
+        <div class="muted" id="kaveriLitres">Level: -- L</div>
+      </div>
+
+      <div class="card span2">
+        <h2>Underground Sump</h2>
+        <div class="sub">Source reservoir</div>
+        <div id="sumpLow" class="low hidden">Low</div>
+        <div class="big green" id="sumpPct">--%</div>
+        <div class="muted" id="sumpLitres">Level: -- L</div>
+      </div>
+
+      <!-- QUBO PLUG 3 DIRECT EMQX CARD -->
+      <div class="card span2">
+        <h2>Sump Motor Plug — qubo_plug_3</h2>
+
+        <div id="plugMqttStatus" class="status-bar disconnected">
+          PLUG MQTT LINK CONNECTING...
+        </div>
+
+        <div id="plugOnlineStatus" class="muted">
+          Plug status: waiting...
+        </div>
+
+        <div class="plugFlex">
+          <div>
+            <div id="plugPowerState" class="big">--</div>
+
+            <div id="plugMetrics" class="muted">
+              Power: -- W | Voltage: -- V | Current: -- A
+            </div>
+
+            <div id="plugKwh" class="muted">
+              Today: -- kWh | Total: -- kWh
+            </div>
+
+            <div id="plugLast" class="muted">
+              Last update: --
+            </div>
+          </div>
+
+          <div class="plugButtons">
+            <button class="green" onclick="plugOn()">TURN MOTOR ON</button>
+            <button class="red" onclick="plugOff()">TURN MOTOR OFF</button>
+          </div>
+        </div>
+
+        <div id="plugMsg" class="msg"></div>
+      </div>
+
+      <div class="card">
+        <h2>Sump-Full Alerts</h2>
+        <div class="muted">
+          Optional — get a Telegram message when the sump hits 100%.
+        </div>
+        <div class="row">
+          <button class="gray" onclick="telegramSubscribe()">Notify me on Telegram</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Corp. Water Inflow</h2>
+        <div class="muted">Last known supply start</div>
+        <div class="big" id="corpStart" style="font-size:20px;">Waiting for rise...</div>
+        <div class="muted" id="corpActive">Stable</div>
+      </div>
+
+      <div class="card">
+        <h2>Today's Draw</h2>
+        <div class="big" id="dailyDraw">-- L</div>
+        <div class="row">
+          <button class="gray" onclick="cmdResetDaily()">Reset Day</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>This Month</h2>
+        <div class="big" id="monthlyDraw">-- L</div>
+        <div class="muted">Since 1st</div>
+        <div class="row">
+          <button class="gray" onclick="cmdResetMonthly()">Reset Month</button>
+        </div>
+      </div>
+
       <div class="card span2">
         <h2>Manual Fill Override</h2>
-        <div class="row"><button onclick="cmdFill(1)">Fill Hitachi</button><button class="red" onclick="cmdFill(2)">Fill Kaveri</button></div>
-        <div class="muted">1-second momentary pulse</div><div class="msg" id="actionMsg"></div>
+        <div class="row">
+          <button onclick="cmdFill(1)">Fill Hitachi</button>
+          <button class="red" onclick="cmdFill(2)">Fill Kaveri</button>
+        </div>
+        <div class="muted">Momentary trigger</div>
+        <div id="actionMsg" class="msg"></div>
+      </div>
+
+    </div>
+
+    <div style="text-align:center; margin-top:16px;">
+      <button class="gray" onclick="toggleCalMenu()" style="max-width:520px;">
+        OPEN CONFIGURATION MENU
+      </button>
+    </div>
+
+    <div id="calMenu" class="hidden" style="max-width:900px;margin:12px auto;">
+      <div class="card">
+        <h2>Sensor diagnostics</h2>
+
+        <div class="mini">
+          <div class="pill">
+            <div class="label">Raw sensor value</div>
+            <div class="value" id="rawValue">--</div>
+          </div>
+
+          <div class="pill">
+            <div class="label">Saved calibration</div>
+            <div class="value" id="savedCal" style="font-size:16px;">Dry: -- | Full: --</div>
+          </div>
+        </div>
+
+        <div class="row">
+          <button class="amber" onclick="cmdCalLow()">CALIBRATE LOW / DRY (0%)</button>
+          <button class="green" onclick="cmdCalFull()">CALIBRATE FULL / WET (100%)</button>
+        </div>
+
+        <div id="calMsg" class="msg"></div>
+
+        <div class="note">
+          LOW: press when sensor is dry / empty.<br>
+          FULL: press when sump is physically at the level you want to treat as 100%.
+        </div>
       </div>
     </div>
-    <div style="text-align:center; margin-top:16px;"><button class="gray" onclick="toggleCalMenu()">OPEN CONFIGURATION MENU</button></div>
-    <div id="calMenu" class="hidden" style="margin:12px auto;">
-      <div class="card">
-        <h2>Diagnostics</h2>
-        <div class="mini">
-          <div class="pill"><div class="label">Raw</div><div class="value" id="rawValue">--</div></div>
-          <div class="pill"><div class="label">Cal</div><div class="value" id="savedCal" style="font-size:16px;">--</div></div>
-        </div>
-        <div class="row"><button class="amber" onclick="cmdCalLow()">CAL LOW</button><button class="green" onclick="cmdCalFull()">CAL FULL</button></div>
-        <div class="msg" id="calMsg"></div>
-      </div>
+
+    <div class="footer">
+      Building Water · telemetry mirror · qubo_plug_3 direct EMQX
     </div>
   </div>
 
+  <!-- MQTT.js for direct EMQX browser connection -->
+  <script src="https://cdn.jsdelivr.net/npm/mqtt@5/dist/mqtt.min.js"></script>
+
   <script>
+    // ============================================================
+    // FIREBASE WATER MONITOR SETTINGS
+    // ============================================================
     const FB_HOST = "https://watermonitor-ace8e-default-rtdb.asia-southeast1.firebasedatabase.app";
     const FB_AUTH = "AIzaSyAWzWVuFyeAq7WEV7ZrY2ic0akuPYV2Ndw";
-    let userName = localStorage.getItem("waterUserName") || "";
-    let pollTimer = null;
 
-    function $(id) { return document.getElementById(id); }
-    function set(id, val) { if ($(id)) $(id).textContent = val; }
-    
-    // CACHE BUSTING FIX FOR WEBVIEW
-    function fbUrl() { return FB_HOST + "/telemetry.json?auth=" + encodeURIComponent(FB_AUTH) + "&t=" + Date.now(); }
-    
+    const TELEGRAM_BOT_USERNAME = "Botwaterlevelmonitor_bot";
+
+    // ============================================================
+    // QUBO PLUG 3 DIRECT EMQX SETTINGS
+    // ============================================================
+    // If this stays on CONNECTING forever, change port 8084 to the
+    // WebSocket TLS port shown in your EMQX dashboard.
+    const PLUG_MQTT_URL = "wss://bcf21211.ala.asia-southeast1.emqxsl.com:8084/mqtt";
+    const PLUG_MQTT_USER = "smartplug_device";
+    const PLUG_MQTT_PASS = "Varun030201@";
+    const PLUG_TOPIC = "qubo_plug_3";
+
+    let userName = "";
+    let appStarted = false;
+
+    let plugClient = null;
+    let plugConnected = false;
+    let plugLwtOnline = false;
+    let lastPlugMessage = 0;
+
+    let plugState = "--";
+    let plugPower = "--";
+    let plugVoltage = "--";
+    let plugCurrent = "--";
+    let plugToday = "--";
+    let plugTotal = "--";
+
+    // ============================================================
+    // BASIC HELPERS
+    // ============================================================
+    function el(id) {
+      return document.getElementById(id);
+    }
+
+    function setText(id, value) {
+      const node = el(id);
+      if (node) node.textContent = value;
+    }
+
+    function formatNumber(value, digits) {
+      const n = Number(value);
+      if (!Number.isFinite(n)) return value;
+      return n.toFixed(digits);
+    }
+
+    // ============================================================
+    // NAME STORAGE
+    // ============================================================
+    function setCookie(name, value) {
+      try {
+        document.cookie = name + "=" + encodeURIComponent(value) + ";path=/;max-age=315360000;SameSite=Lax";
+      } catch (e) {}
+    }
+
+    function getCookie(name) {
+      try {
+        const match = document.cookie.match(new RegExp("(?:^|; )" + name + "=([^;]*)"));
+        return match ? decodeURIComponent(match[1]) : "";
+      } catch (e) {
+        return "";
+      }
+    }
+
+    function loadName() {
+      try {
+        const v = localStorage.getItem("waterUserName");
+        if (v) return v;
+      } catch (e) {}
+
+      return getCookie("waterUserName");
+    }
+
+    function saveName(name) {
+      try {
+        localStorage.setItem("waterUserName", name);
+      } catch (e) {}
+
+      setCookie("waterUserName", name);
+    }
+
+    // ============================================================
+    // FIREBASE HELPERS
+    // ============================================================
+    function fbPath(path) {
+      return FB_HOST + path + "?auth=" + encodeURIComponent(FB_AUTH);
+    }
+
+    function fbTelemetryUrl() {
+      return fbPath("/telemetry.json");
+    }
+
     function fbPatch(obj) {
       obj.lastActionBy = userName || "web";
-      return fetch(fbUrl(), { 
-        method: "PATCH", 
-        headers: { "Content-Type": "application/json" }, 
-        body: JSON.stringify(obj), 
-        cache: "no-store" 
+
+      return fetch(fbTelemetryUrl(), {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(obj),
+        cache: "no-store"
       });
     }
 
-    function actionMsg(t) { set("actionMsg", t); setTimeout(() => set("actionMsg", ""), 4000); }
-    function calMsg(t) { set("calMsg", t); setTimeout(() => set("calMsg", ""), 4000); }
-    function toggleCalMenu() { $("calMenu").classList.toggle("hidden"); }
+    function actionMsg(text) {
+      setText("actionMsg", text);
+      setTimeout(() => setText("actionMsg", ""), 6000);
+    }
 
+    function calMsg(text) {
+      setText("calMsg", text);
+      setTimeout(() => setText("calMsg", ""), 6000);
+    }
+
+    function plugMsg(text) {
+      setText("plugMsg", text);
+      setTimeout(() => setText("plugMsg", ""), 6000);
+    }
+
+    function toggleCalMenu() {
+      const menu = el("calMenu");
+      if (!menu) return;
+      menu.classList.toggle("hidden");
+    }
+
+    // ============================================================
+    // APP START
+    // ============================================================
     function startApp() {
-      $("nameOverlay").classList.add("hidden"); $("app").classList.remove("hidden"); $("userBadge").textContent = userName || "Guest";
-      fbPatch({ pageOpenedFlag: 1, pageOpenedBy: userName }).catch(()=>{});
-      if (!pollTimer) { refresh(); pollTimer = setInterval(refresh, 3000); }
+      el("nameOverlay").classList.add("hidden");
+      el("app").classList.remove("hidden");
+      setText("userBadge", userName || "Guest");
+
+      if (!appStarted) {
+        appStarted = true;
+
+        refreshWater();
+        setInterval(refreshWater, 3000);
+
+        connectPlug();
+        setInterval(renderPlug, 5000);
+
+        setInterval(function () {
+          if (plugClient && plugClient.connected) {
+            plugClient.publish("cmnd/" + PLUG_TOPIC + "/POWER", "", { qos: 1 });
+          }
+        }, 20000);
+
+        fbPatch({
+          pageOpenedFlag: 1,
+          pageOpenedBy: userName || "web"
+        }).catch(() => {});
+      }
     }
 
     async function continueApp() {
-      const n = $("nameInput").value.trim(); if (!n) return alert("Enter name");
-      userName = n; localStorage.setItem("waterUserName", n); startApp();
-    }
+      const name = el("nameInput").value.trim();
 
-    function telegramSubscribe() { window.location.href = "https://t.me/Botwaterlevelmonitor_bot?start=subscribe_sump"; }
+      if (!name) {
+        alert("Please enter your name.");
+        return;
+      }
 
-    function cmdFill(m) { 
-      const p = m === 1 ? { cmdFillHitachi: 1 } : { cmdFillKaveri: 1 };
-      fbPatch(p).then(() => actionMsg("Command sent!")).catch(() => actionMsg("Failed"));
-    }
-    function cmdResetDaily() { fbPatch({ cmdResetDaily: 1 }).then(() => actionMsg("Reset sent")); }
-    function cmdResetMonthly() { fbPatch({ cmdResetMonthly: 1 }).then(() => actionMsg("Reset sent")); }
-    function cmdCalLow() { fbPatch({ cmdCalLow: 1 }).then(() => calMsg("Sent")); }
-    function cmdCalFull() { fbPatch({ cmdCalFull: 1 }).then(() => calMsg("Sent")); }
+      userName = name;
+      saveName(name);
 
-    async function refresh() {
       try {
-        const r = await fetch(fbUrl(), { cache: "no-store" }); const d = await r.json();
-        const alive = d.lastSeenEpoch && (Math.floor(Date.now()/1000) - d.lastSeenEpoch < 30);
-        $("statusBar").textContent = alive ? "Live · " + new Date(d.lastSeenEpoch*1000).toLocaleTimeString() : "Offline";
-        $("statusBar").className = "status-bar " + (alive ? "connected" : "disconnected");
-        set("hitachiPct", (d.hitachiPct||0)+"%"); set("hitachiLitres", (d.hitachiLitres||0)+" L");
-        set("kaveriPct", (d.kaveriPct||0)+"%"); set("kaveriLitres", (d.kaveriLitres||0)+" L");
-        set("sumpPct", (d.sumpPct||0)+"%"); set("sumpLitres", (d.sumpLitres||0)+" L");
-        set("rawValue", d.sumpRaw||0); set("savedCal", "D:"+(d.calDry||0)+" W:"+(d.calWet||0));
-        set("corpStart", d.corpWaterStart||"Waiting"); set("corpActive", d.corpInflowActive?"ACTIVE":"Stable");
-        set("dailyDraw", (d.dailyConsumption||0)+" L"); set("monthlyDraw", (d.monthlyConsumption||0)+" L");
-        const b = $("fillBanner");
-        if (d.fillingMode === 1) { b.style.display="block"; b.textContent="HITACHI MOTOR ON (1s Pulse)"; }
-        else if (d.fillingMode === 2) { b.style.display="block"; b.textContent="KAVERI MOTOR ON (1s Pulse)"; }
-        else { b.style.display="none"; }
-      } catch(e) { $("statusBar").textContent = "Offline"; $("statusBar").className = "status-bar disconnected"; }
+        await fetch(fbPath("/registeredUsers/" + Date.now() + ".json"), {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(name),
+          cache: "no-store"
+        });
+      } catch (e) {}
+
+      startApp();
     }
 
-    window.addEventListener("load", () => {
-      if ($("nameInput")) $("nameInput").value = userName;
-      if (userName) startApp(); else $("nameOverlay").classList.remove("hidden");
+    function telegramSubscribe() {
+      window.location.href = "https://t.me/" + TELEGRAM_BOT_USERNAME + "?start=subscribe_sump";
+    }
+
+    // ============================================================
+    // WATER COMMANDS
+    // ============================================================
+    function cmdFill(mode) {
+      const payload = mode === 1 ? { cmdFillHitachi: 1 } : { cmdFillKaveri: 1 };
+
+      fbPatch(payload)
+        .then(() => actionMsg("Fill command sent."))
+        .catch(() => actionMsg("Fill command failed."));
+    }
+
+    function cmdResetDaily() {
+      if (!confirm("Reset today's consumption to 0?")) return;
+
+      fbPatch({ cmdResetDaily: 1 })
+        .then(() => actionMsg("Daily reset sent."))
+        .catch(() => actionMsg("Daily reset failed."));
+    }
+
+    function cmdResetMonthly() {
+      if (!confirm("Reset monthly consumption to 0?")) return;
+
+      fbPatch({ cmdResetMonthly: 1 })
+        .then(() => actionMsg("Monthly reset sent."))
+        .catch(() => actionMsg("Monthly reset failed."));
+    }
+
+    function cmdCalLow() {
+      fbPatch({ cmdCalLow: 1 })
+        .then(() => calMsg("Low/dry calibration command sent."))
+        .catch(() => calMsg("Low calibration command failed."));
+    }
+
+    function cmdCalFull() {
+      fbPatch({ cmdCalFull: 1 })
+        .then(() => calMsg("Full/wet calibration command sent."))
+        .catch(() => calMsg("Full calibration command failed."));
+    }
+
+    // ============================================================
+    // WATER TELEMETRY
+    // ============================================================
+    function setLowBadge(id, pct) {
+      const node = el(id);
+      if (!node) return;
+
+      if (pct >= 1 && pct < 10) {
+        node.classList.remove("hidden");
+      } else {
+        node.classList.add("hidden");
+      }
+    }
+
+    async function refreshWater() {
+      try {
+        const res = await fetch(fbTelemetryUrl(), {
+          cache: "no-store"
+        });
+
+        if (!res.ok) throw new Error("HTTP " + res.status);
+
+        const d = await res.json();
+        if (!d) throw new Error("Empty telemetry");
+
+        const nowSec = Math.floor(Date.now() / 1000);
+        const lastSeen = Number(d.lastSeenEpoch || 0);
+        const age = lastSeen ? (nowSec - lastSeen) : 99999;
+        const alive = age < 30;
+
+        const statusBar = el("waterStatus");
+        if (statusBar) {
+          statusBar.textContent = alive
+            ? "Live telemetry · Updated: " + new Date(lastSeen * 1000).toLocaleTimeString()
+            : "Connecting… / ESP32 offline";
+
+          statusBar.className = "status-bar " + (alive ? "connected" : "disconnected");
+        }
+
+        const hitachiPct = Number(d.hitachiPct || 0);
+        const kaveriPct = Number(d.kaveriPct || 0);
+        const sumpPct = Number(d.sumpPct || 0);
+
+        setText("hitachiPct", hitachiPct + "%");
+        setText("hitachiLitres", "Level: " + (Number(d.hitachiLitres || 0)) + " L");
+
+        setText("kaveriPct", kaveriPct + "%");
+        setText("kaveriLitres", "Level: " + (Number(d.kaveriLitres || 0)) + " L");
+
+        setText("sumpPct", sumpPct + "%");
+        setText("sumpLitres", "Level: " + (Number(d.sumpLitres || 0)) + " L");
+
+        setLowBadge("hitachiLow", hitachiPct);
+        setLowBadge("kaveriLow", kaveriPct);
+        setLowBadge("sumpLow", sumpPct);
+
+        setText("rawValue", Number(d.sumpRaw || 0));
+        setText("savedCal", "Dry: " + Number(d.calDry || 0) + " | Full: " + Number(d.calWet || 0));
+
+        setText("corpStart", d.corpWaterStart || "Waiting for rise...");
+        setText("corpActive", Number(d.corpInflowActive) === 1 ? "ACTIVE INFLOW" : "Stable");
+
+        setText("dailyDraw", (Number(d.dailyConsumption || 0)) + " L");
+        setText("monthlyDraw", (Number(d.monthlyConsumption || 0)) + " L");
+
+        const banner = el("fillBanner");
+        if (banner) {
+          if (Number(d.fillingMode) === 1) {
+            banner.style.display = "block";
+            banner.textContent = "MOTOR STARTED: HITACHI MOTOR ON";
+          } else if (Number(d.fillingMode) === 2) {
+            banner.style.display = "block";
+            banner.textContent = "MOTOR STARTED: KAVERI MOTOR ON";
+          } else {
+            banner.style.display = "none";
+          }
+        }
+      } catch (e) {
+        const statusBar = el("waterStatus");
+        if (statusBar) {
+          statusBar.textContent = "Connecting… / failed to read Firebase";
+          statusBar.className = "status-bar disconnected";
+        }
+      }
+    }
+
+    // ============================================================
+    // QUBO PLUG 3 DIRECT EMQX
+    // ============================================================
+    function renderPlug() {
+      const mqttBar = el("plugMqttStatus");
+      if (mqttBar) {
+        mqttBar.textContent = plugConnected
+          ? "PLUG MQTT LINK ACTIVE"
+          : "PLUG MQTT LINK CONNECTING / RETRYING...";
+
+        mqttBar.className = "status-bar " + (plugConnected ? "connected" : "disconnected");
+      }
+
+      const fresh = lastPlugMessage && (Date.now() - lastPlugMessage < 35000);
+      const online = plugLwtOnline || fresh;
+
+      setText(
+        "plugOnlineStatus",
+        online
+          ? "Plug online / data fresh"
+          : "Plug offline or no recent data"
+      );
+
+      setText("plugPowerState", plugState);
+
+      const stateNode = el("plugPowerState");
+      if (stateNode) {
+        if (plugState === "ON") {
+          stateNode.style.color = "#10b981";
+        } else if (plugState === "OFF") {
+          stateNode.style.color = "#ef4444";
+        } else {
+          stateNode.style.color = "#38bdf8";
+        }
+      }
+
+      setText(
+        "plugMetrics",
+        "Power: " + formatNumber(plugPower, 1) +
+        " W | Voltage: " + formatNumber(plugVoltage, 1) +
+        " V | Current: " + formatNumber(plugCurrent, 2) + " A"
+      );
+
+      setText(
+        "plugKwh",
+        "Today: " + formatNumber(plugToday, 3) +
+        " kWh | Total: " + formatNumber(plugTotal, 3) + " kWh"
+      );
+
+      setText(
+        "plugLast",
+        lastPlugMessage
+          ? "Last update: " + new Date(lastPlugMessage).toLocaleTimeString()
+          : "Last update: --"
+      );
+    }
+
+    function handlePlugMessage(topic, payload) {
+      lastPlugMessage = Date.now();
+
+      let text = "";
+
+      try {
+        text = new TextDecoder().decode(payload);
+      } catch (e) {
+        text = payload.toString();
+      }
+
+      text = text.trim();
+
+      if (topic.endsWith("/LWT")) {
+        plugLwtOnline = /online/i.test(text);
+        renderPlug();
+        return;
+      }
+
+      if (topic.endsWith("/POWER") && /^(ON|OFF)$/i.test(text)) {
+        plugState = text.toUpperCase();
+        renderPlug();
+        return;
+      }
+
+      try {
+        const d = JSON.parse(text);
+
+        const p = d.POWER || d.Power;
+        if (p && /^(ON|OFF)$/i.test(String(p))) {
+          plugState = String(p).toUpperCase();
+        }
+
+        const energy = d.ENERGY || d.StatusENERGY;
+
+        if (energy) {
+          if (typeof energy.Power !== "undefined") plugPower = energy.Power;
+          if (typeof energy.Voltage !== "undefined") plugVoltage = energy.Voltage;
+          if (typeof energy.Current !== "undefined") plugCurrent = energy.Current;
+          if (typeof energy.Today !== "undefined") plugToday = energy.Today;
+          if (typeof energy.Total !== "undefined") plugTotal = energy.Total;
+        }
+
+        renderPlug();
+      } catch (e) {
+        // Not JSON, ignore
+      }
+    }
+
+    function subscribePlugTopics() {
+      if (!plugClient || !plugClient.connected) return;
+
+      plugClient.subscribe(
+        [
+          "tele/" + PLUG_TOPIC + "/STATE",
+          "tele/" + PLUG_TOPIC + "/SENSOR",
+          "tele/" + PLUG_TOPIC + "/LWT",
+          "stat/" + PLUG_TOPIC + "/POWER",
+          "stat/" + PLUG_TOPIC + "/RESULT"
+        ],
+        { qos: 1 }
+      );
+
+      // Ask Tasmota to send energy telemetry more often
+      plugClient.publish("cmnd/" + PLUG_TOPIC + "/TelePeriod", "10", { qos: 1 });
+
+      // Request current power state
+      plugClient.publish("cmnd/" + PLUG_TOPIC + "/POWER", "", { qos: 1 });
+    }
+
+    function connectPlug() {
+      if (typeof mqtt === "undefined") {
+        setText("plugMqttStatus", "MQTT LIBRARY FAILED TO LOAD");
+        const mqttBar = el("plugMqttStatus");
+        if (mqttBar) mqttBar.className = "status-bar disconnected";
+        return;
+      }
+
+      try {
+        plugClient = mqtt.connect(PLUG_MQTT_URL, {
+          username: PLUG_MQTT_USER,
+          password: PLUG_MQTT_PASS,
+          clientId: "waterhtml_" + Math.random().toString(16).slice(2),
+          clean: true,
+          reconnectPeriod: 5000,
+          connectTimeout: 10000,
+          protocolVersion: 4
+        });
+      } catch (e) {
+        console.error(e);
+        setText("plugMqttStatus", "MQTT CONNECTION FAILED");
+        const mqttBar = el("plugMqttStatus");
+        if (mqttBar) mqttBar.className = "status-bar disconnected";
+        return;
+      }
+
+      plugClient.on("connect", function () {
+        plugConnected = true;
+        renderPlug();
+        plugMsg("MQTT connected to EMQX.");
+        subscribePlugTopics();
+      });
+
+      plugClient.on("close", function () {
+        plugConnected = false;
+        renderPlug();
+      });
+
+      plugClient.on("error", function (err) {
+        console.error("MQTT error:", err);
+        plugMsg("MQTT error. Check WebSocket URL / EMQX port.");
+      });
+
+      plugClient.on("message", function (topic, payload) {
+        handlePlugMessage(topic, payload);
+      });
+    }
+
+    function plugOn() {
+      if (!plugClient || !plugClient.connected) {
+        plugMsg("MQTT not connected yet.");
+        return;
+      }
+
+      plugClient.publish("cmnd/" + PLUG_TOPIC + "/POWER", "ON", { qos: 1 });
+      plugState = "ON";
+      renderPlug();
+      plugMsg("ON command sent to qubo_plug_3.");
+    }
+
+    function plugOff() {
+      if (!plugClient || !plugClient.connected) {
+        plugMsg("MQTT not connected yet.");
+        return;
+      }
+
+      plugClient.publish("cmnd/" + PLUG_TOPIC + "/POWER", "OFF", { qos: 1 });
+      plugState = "OFF";
+      renderPlug();
+      plugMsg("OFF command sent to qubo_plug_3.");
+    }
+
+    // ============================================================
+    // INIT
+    // ============================================================
+    document.addEventListener("DOMContentLoaded", function () {
+      userName = loadName();
+
+      const input = el("nameInput");
+      if (input) input.value = userName;
+
+      if (userName) {
+        startApp();
+      } else {
+        el("nameOverlay").classList.remove("hidden");
+      }
     });
   </script>
 </body>
