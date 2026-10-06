@@ -167,6 +167,11 @@
       transform: translateY(1px);
     }
 
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.45;
+    }
+
     button.green {
       background: var(--green);
     }
@@ -374,6 +379,17 @@
         <div class="muted" id="kaveriLitres">Level: -- L</div>
       </div>
 
+      <!-- MANUAL FILL TAB BELOW HITACHI / KAVERI CARDS -->
+      <div class="card span2">
+        <h2>Manual Fill Override</h2>
+        <div class="row">
+          <button onclick="cmdFill(1)">Fill Hitachi</button>
+          <button class="red" onclick="cmdFill(2)">Fill Kaveri</button>
+        </div>
+        <div class="muted">Momentary trigger</div>
+        <div id="actionMsg" class="msg"></div>
+      </div>
+
       <div class="card span2">
         <h2>Underground Sump</h2>
         <div class="sub">Source reservoir</div>
@@ -382,9 +398,13 @@
         <div class="muted" id="sumpLitres">Level: -- L</div>
       </div>
 
-      <!-- QUBO PLUG 3 DIRECT EMQX CARD -->
+      <!-- QUBO PLUG 3 DIRECT EMQX CARD WITH TIME ACCESS -->
       <div class="card span2">
         <h2>Sump Motor Plug — qubo_plug_3</h2>
+
+        <div id="plugAccessStatus" class="status-bar disconnected">
+          Checking motor plug access window...
+        </div>
 
         <div id="plugMqttStatus" class="status-bar disconnected">
           PLUG MQTT LINK CONNECTING...
@@ -412,8 +432,8 @@
           </div>
 
           <div class="plugButtons">
-            <button class="green" onclick="plugOn()">TURN MOTOR ON</button>
-            <button class="red" onclick="plugOff()">TURN MOTOR OFF</button>
+            <button id="plugOnBtn" class="green" onclick="plugOn()">TURN MOTOR ON</button>
+            <button id="plugOffBtn" class="red" onclick="plugOff()">TURN MOTOR OFF</button>
           </div>
         </div>
 
@@ -452,16 +472,6 @@
         <div class="row">
           <button class="gray" onclick="cmdResetMonthly()">Reset Month</button>
         </div>
-      </div>
-
-      <div class="card span2">
-        <h2>Manual Fill Override</h2>
-        <div class="row">
-          <button onclick="cmdFill(1)">Fill Hitachi</button>
-          <button class="red" onclick="cmdFill(2)">Fill Kaveri</button>
-        </div>
-        <div class="muted">Momentary trigger</div>
-        <div id="actionMsg" class="msg"></div>
       </div>
 
     </div>
@@ -520,10 +530,22 @@
     const TELEGRAM_BOT_USERNAME = "Botwaterlevelmonitor_bot";
 
     // ============================================================
-    // QUBO PLUG 3 DIRECT EMQX SETTINGS
+    // QUBO PLUG TIME ACCESS SETTINGS
     // ============================================================
-    // If this stays on CONNECTING forever, change port 8084 to the
-    // WebSocket TLS port shown in your EMQX dashboard.
+    // First access window:
+    // 07-Oct-2026 00:00 midnight to 07-Oct-2026 12:00 noon.
+    //
+    // Then every 48 hours:
+    // 09-Oct-2026 00:00 to 12:00
+    // 11-Oct-2026 00:00 to 12:00
+    // etc.
+    const PLUG_FIRST_ACCESS = new Date('2026-10-07T00:00:00');
+    const PLUG_ACCESS_CYCLE_HOURS = 48;
+    const PLUG_ACCESS_DURATION_HOURS = 12;
+
+    // ============================================================
+    // QUBO PLUG DIRECT EMQX SETTINGS
+    // ============================================================
     const PLUG_MQTT_URL = "wss://bcf21211.ala.asia-southeast1.emqxsl.com:8084/mqtt";
     const PLUG_MQTT_USER = "smartplug_device";
     const PLUG_MQTT_PASS = "Varun030201@";
@@ -560,6 +582,21 @@
       const n = Number(value);
       if (!Number.isFinite(n)) return value;
       return n.toFixed(digits);
+    }
+
+    function formatAccessDate(d) {
+      try {
+        return d.toLocaleString(undefined, {
+          weekday: "short",
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit"
+        });
+      } catch (e) {
+        return d.toString();
+      }
     }
 
     // ============================================================
@@ -642,6 +679,19 @@
       menu.classList.toggle("hidden");
     }
 
+    async function notifyRegistration(name) {
+      try {
+        const already = localStorage.getItem("waterRegNotified");
+        if (!already) {
+          await fbPatch({
+            newRegistrationFlag: 1,
+            newRegistrationName: name || "Unknown"
+          });
+          localStorage.setItem("waterRegNotified", "1");
+        }
+      } catch (e) {}
+    }
+
     // ============================================================
     // APP START
     // ============================================================
@@ -658,6 +708,7 @@
 
         connectPlug();
         setInterval(renderPlug, 5000);
+        setInterval(renderPlugAccess, 30000);
 
         setInterval(function () {
           if (plugClient && plugClient.connected) {
@@ -669,6 +720,10 @@
           pageOpenedFlag: 1,
           pageOpenedBy: userName || "web"
         }).catch(() => {});
+
+        notifyRegistration(userName);
+
+        renderPlugAccess();
       }
     }
 
@@ -827,7 +882,73 @@
     }
 
     // ============================================================
-    // QUBO PLUG 3 DIRECT EMQX
+    // QUBO PLUG ACCESS WINDOW
+    // ============================================================
+    function getPlugAccess() {
+      const now = new Date();
+
+      if (isNaN(PLUG_FIRST_ACCESS.getTime())) {
+        return { allowed: false, next: now, end: null };
+      }
+
+      if (now < PLUG_FIRST_ACCESS) {
+        return { allowed: false, next: PLUG_FIRST_ACCESS, end: null };
+      }
+
+      const cycleMs = PLUG_ACCESS_CYCLE_HOURS * 3600000;
+      const durationMs = PLUG_ACCESS_DURATION_HOURS * 3600000;
+
+      const elapsed = now.getTime() - PLUG_FIRST_ACCESS.getTime();
+      const cycles = Math.floor(elapsed / cycleMs);
+
+      const windowStart = new Date(PLUG_FIRST_ACCESS.getTime() + cycles * cycleMs);
+      const windowEnd = new Date(windowStart.getTime() + durationMs);
+
+      if (now >= windowStart && now < windowEnd) {
+        return { allowed: true, next: windowEnd, end: windowEnd };
+      }
+
+      const nextStart = new Date(PLUG_FIRST_ACCESS.getTime() + (cycles + 1) * cycleMs);
+      return { allowed: false, next: nextStart, end: null };
+    }
+
+    function renderPlugAccess() {
+      const access = getPlugAccess();
+
+      const bar = el("plugAccessStatus");
+      const onBtn = el("plugOnBtn");
+      const offBtn = el("plugOffBtn");
+
+      if (!bar || !onBtn || !offBtn) return;
+
+      if (access.allowed) {
+        bar.textContent = "Motor plug access OPEN until " + formatAccessDate(access.end);
+        bar.className = "status-bar connected";
+
+        onBtn.disabled = false;
+        offBtn.disabled = false;
+      } else {
+        bar.textContent = "Motor plug access CLOSED. Next access: " + formatAccessDate(access.next);
+        bar.className = "status-bar disconnected";
+
+        onBtn.disabled = true;
+        offBtn.disabled = true;
+      }
+    }
+
+    // ============================================================
+    // QUBO PLUG FIREBASE ACTION LOG FOR TELEGRAM ADMIN ALERTS
+    // ============================================================
+    function logPlugAction(action) {
+      fbPatch({
+        plugAction: action,
+        plugActionBy: userName || "Guest",
+        plugActionTime: new Date().toLocaleString()
+      }).catch(() => {});
+    }
+
+    // ============================================================
+    // QUBO PLUG DIRECT EMQX
     // ============================================================
     function renderPlug() {
       const mqttBar = el("plugMqttStatus");
@@ -881,6 +1002,8 @@
           ? "Last update: " + new Date(lastPlugMessage).toLocaleTimeString()
           : "Last update: --"
       );
+
+      renderPlugAccess();
     }
 
     function handlePlugMessage(topic, payload) {
@@ -927,9 +1050,7 @@
         }
 
         renderPlug();
-      } catch (e) {
-        // Not JSON, ignore
-      }
+      } catch (e) {}
     }
 
     function subscribePlugTopics() {
@@ -946,10 +1067,7 @@
         { qos: 1 }
       );
 
-      // Ask Tasmota to send energy telemetry more often
       plugClient.publish("cmnd/" + PLUG_TOPIC + "/TelePeriod", "10", { qos: 1 });
-
-      // Request current power state
       plugClient.publish("cmnd/" + PLUG_TOPIC + "/POWER", "", { qos: 1 });
     }
 
@@ -1002,6 +1120,13 @@
     }
 
     function plugOn() {
+      const access = getPlugAccess();
+
+      if (!access.allowed) {
+        plugMsg("Motor plug access is closed. Next access: " + formatAccessDate(access.next));
+        return;
+      }
+
       if (!plugClient || !plugClient.connected) {
         plugMsg("MQTT not connected yet.");
         return;
@@ -1011,9 +1136,17 @@
       plugState = "ON";
       renderPlug();
       plugMsg("ON command sent to qubo_plug_3.");
+      logPlugAction(1);
     }
 
     function plugOff() {
+      const access = getPlugAccess();
+
+      if (!access.allowed) {
+        plugMsg("Motor plug access is closed. Next access: " + formatAccessDate(access.next));
+        return;
+      }
+
       if (!plugClient || !plugClient.connected) {
         plugMsg("MQTT not connected yet.");
         return;
@@ -1023,6 +1156,7 @@
       plugState = "OFF";
       renderPlug();
       plugMsg("OFF command sent to qubo_plug_3.");
+      logPlugAction(2);
     }
 
     // ============================================================
