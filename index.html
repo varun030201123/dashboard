@@ -333,8 +333,7 @@
       </div>
 
       <div class="note">
-        Optional: get notified when the sump is full. Opens Telegram — tap Start there once,
-        and you will get a message whenever the sump tank hits 100%.
+        Optional: get Telegram alerts for corp water start, low tank, leak alert, daily summary and sump full.
       </div>
 
       <div class="row">
@@ -379,7 +378,7 @@
         <div class="muted" id="kaveriLitres">Level: -- L</div>
       </div>
 
-      <!-- MANUAL FILL TAB BELOW HITACHI / KAVERI CARDS -->
+      <!-- MANUAL FILL BELOW TANK CARDS -->
       <div class="card span2">
         <h2>Manual Fill Override</h2>
         <div class="row">
@@ -398,7 +397,7 @@
         <div class="muted" id="sumpLitres">Level: -- L</div>
       </div>
 
-      <!-- QUBO PLUG 3 DIRECT EMQX CARD WITH TIME ACCESS -->
+      <!-- QUBO PLUG CARD CONTROLLED THROUGH ESP32 / FIREBASE -->
       <div class="card span2">
         <h2>Sump Motor Plug — qubo_plug_3</h2>
 
@@ -406,12 +405,8 @@
           Checking motor plug access window...
         </div>
 
-        <div id="plugMqttStatus" class="status-bar disconnected">
-          PLUG MQTT LINK CONNECTING...
-        </div>
-
         <div id="plugOnlineStatus" class="muted">
-          Plug status: waiting...
+          Plug state: waiting...
         </div>
 
         <div class="plugFlex">
@@ -425,10 +420,6 @@
             <div id="plugKwh" class="muted">
               Today: -- kWh | Total: -- kWh
             </div>
-
-            <div id="plugLast" class="muted">
-              Last update: --
-            </div>
           </div>
 
           <div class="plugButtons">
@@ -441,9 +432,9 @@
       </div>
 
       <div class="card">
-        <h2>Sump-Full Alerts</h2>
+        <h2>Important Water Alerts</h2>
         <div class="muted">
-          Optional — get a Telegram message when the sump hits 100%.
+          Telegram alerts for corp water start, low tank, leak alert, daily summary and sump full.
         </div>
         <div class="row">
           <button class="gray" onclick="telegramSubscribe()">Notify me on Telegram</button>
@@ -452,7 +443,7 @@
 
       <div class="card">
         <h2>Corp. Water Inflow</h2>
-        <div class="muted">Last known supply start</div>
+        <div class="muted">Last confirmed supply start</div>
         <div class="big" id="corpStart" style="font-size:20px;">Waiting for rise...</div>
         <div class="muted" id="corpActive">Stable</div>
       </div>
@@ -468,7 +459,7 @@
       <div class="card">
         <h2>This Month</h2>
         <div class="big" id="monthlyDraw">-- L</div>
-        <div class="muted">Since 1st</div>
+        <div class="muted" id="monthlySince">Since --</div>
         <div class="row">
           <button class="gray" onclick="cmdResetMonthly()">Reset Month</button>
         </div>
@@ -513,16 +504,13 @@
     </div>
 
     <div class="footer">
-      Building Water · telemetry mirror · qubo_plug_3 direct EMQX
+      Building Water · telemetry mirror · qubo_plug_3 controlled through ESP32
     </div>
   </div>
 
-  <!-- MQTT.js for direct EMQX browser connection -->
-  <script src="https://cdn.jsdelivr.net/npm/mqtt@5/dist/mqtt.min.js"></script>
-
   <script>
     // ============================================================
-    // FIREBASE WATER MONITOR SETTINGS
+    // FIREBASE SETTINGS
     // ============================================================
     const FB_HOST = "https://watermonitor-ace8e-default-rtdb.asia-southeast1.firebasedatabase.app";
     const FB_AUTH = "AIzaSyAWzWVuFyeAq7WEV7ZrY2ic0akuPYV2Ndw";
@@ -530,44 +518,19 @@
     const TELEGRAM_BOT_USERNAME = "Botwaterlevelmonitor_bot";
 
     // ============================================================
-    // QUBO PLUG TIME ACCESS SETTINGS
+    // PLUG ACCESS WINDOW
     // ============================================================
-    // First access window:
-    // 07-Oct-2026 00:00 midnight to 07-Oct-2026 12:00 noon.
-    //
-    // Then every 48 hours:
-    // 09-Oct-2026 00:00 to 12:00
-    // 11-Oct-2026 00:00 to 12:00
-    // etc.
     const PLUG_FIRST_ACCESS = new Date('2026-10-07T00:00:00');
     const PLUG_ACCESS_CYCLE_HOURS = 48;
     const PLUG_ACCESS_DURATION_HOURS = 12;
-
-    // ============================================================
-    // QUBO PLUG DIRECT EMQX SETTINGS
-    // ============================================================
-    const PLUG_MQTT_URL = "wss://bcf21211.ala.asia-southeast1.emqxsl.com:8084/mqtt";
-    const PLUG_MQTT_USER = "smartplug_device";
-    const PLUG_MQTT_PASS = "Varun030201@";
-    const PLUG_TOPIC = "qubo_plug_3";
+    const PLUG_SUMP_SAFETY_PCT = 85;
 
     let userName = "";
     let appStarted = false;
-
-    let plugClient = null;
-    let plugConnected = false;
-    let plugLwtOnline = false;
-    let lastPlugMessage = 0;
-
-    let plugState = "--";
-    let plugPower = "--";
-    let plugVoltage = "--";
-    let plugCurrent = "--";
-    let plugToday = "--";
-    let plugTotal = "--";
+    let lastData = null;
 
     // ============================================================
-    // BASIC HELPERS
+    // HELPERS
     // ============================================================
     function el(id) {
       return document.getElementById(id);
@@ -580,7 +543,7 @@
 
     function formatNumber(value, digits) {
       const n = Number(value);
-      if (!Number.isFinite(n)) return value;
+      if (!Number.isFinite(n)) return "--";
       return n.toFixed(digits);
     }
 
@@ -704,17 +667,7 @@
         appStarted = true;
 
         refreshWater();
-        setInterval(refreshWater, 3000);
-
-        connectPlug();
-        setInterval(renderPlug, 5000);
-        setInterval(renderPlugAccess, 30000);
-
-        setInterval(function () {
-          if (plugClient && plugClient.connected) {
-            plugClient.publish("cmnd/" + PLUG_TOPIC + "/POWER", "", { qos: 1 });
-          }
-        }, 20000);
+        setInterval(refreshWater, 2500);
 
         fbPatch({
           pageOpenedFlag: 1,
@@ -722,8 +675,6 @@
         }).catch(() => {});
 
         notifyRegistration(userName);
-
-        renderPlugAccess();
       }
     }
 
@@ -796,93 +747,7 @@
     }
 
     // ============================================================
-    // WATER TELEMETRY
-    // ============================================================
-    function setLowBadge(id, pct) {
-      const node = el(id);
-      if (!node) return;
-
-      if (pct >= 1 && pct < 10) {
-        node.classList.remove("hidden");
-      } else {
-        node.classList.add("hidden");
-      }
-    }
-
-    async function refreshWater() {
-      try {
-        const res = await fetch(fbTelemetryUrl(), {
-          cache: "no-store"
-        });
-
-        if (!res.ok) throw new Error("HTTP " + res.status);
-
-        const d = await res.json();
-        if (!d) throw new Error("Empty telemetry");
-
-        const nowSec = Math.floor(Date.now() / 1000);
-        const lastSeen = Number(d.lastSeenEpoch || 0);
-        const age = lastSeen ? (nowSec - lastSeen) : 99999;
-        const alive = age < 30;
-
-        const statusBar = el("waterStatus");
-        if (statusBar) {
-          statusBar.textContent = alive
-            ? "Live telemetry · Updated: " + new Date(lastSeen * 1000).toLocaleTimeString()
-            : "Connecting… / ESP32 offline";
-
-          statusBar.className = "status-bar " + (alive ? "connected" : "disconnected");
-        }
-
-        const hitachiPct = Number(d.hitachiPct || 0);
-        const kaveriPct = Number(d.kaveriPct || 0);
-        const sumpPct = Number(d.sumpPct || 0);
-
-        setText("hitachiPct", hitachiPct + "%");
-        setText("hitachiLitres", "Level: " + (Number(d.hitachiLitres || 0)) + " L");
-
-        setText("kaveriPct", kaveriPct + "%");
-        setText("kaveriLitres", "Level: " + (Number(d.kaveriLitres || 0)) + " L");
-
-        setText("sumpPct", sumpPct + "%");
-        setText("sumpLitres", "Level: " + (Number(d.sumpLitres || 0)) + " L");
-
-        setLowBadge("hitachiLow", hitachiPct);
-        setLowBadge("kaveriLow", kaveriPct);
-        setLowBadge("sumpLow", sumpPct);
-
-        setText("rawValue", Number(d.sumpRaw || 0));
-        setText("savedCal", "Dry: " + Number(d.calDry || 0) + " | Full: " + Number(d.calWet || 0));
-
-        setText("corpStart", d.corpWaterStart || "Waiting for rise...");
-        setText("corpActive", Number(d.corpInflowActive) === 1 ? "ACTIVE INFLOW" : "Stable");
-
-        setText("dailyDraw", (Number(d.dailyConsumption || 0)) + " L");
-        setText("monthlyDraw", (Number(d.monthlyConsumption || 0)) + " L");
-
-        const banner = el("fillBanner");
-        if (banner) {
-          if (Number(d.fillingMode) === 1) {
-            banner.style.display = "block";
-            banner.textContent = "MOTOR STARTED: HITACHI MOTOR ON";
-          } else if (Number(d.fillingMode) === 2) {
-            banner.style.display = "block";
-            banner.textContent = "MOTOR STARTED: KAVERI MOTOR ON";
-          } else {
-            banner.style.display = "none";
-          }
-        }
-      } catch (e) {
-        const statusBar = el("waterStatus");
-        if (statusBar) {
-          statusBar.textContent = "Connecting… / failed to read Firebase";
-          statusBar.className = "status-bar disconnected";
-        }
-      }
-    }
-
-    // ============================================================
-    // QUBO PLUG ACCESS WINDOW
+    // PLUG ACCESS WINDOW
     // ============================================================
     function getPlugAccess() {
       const now = new Date();
@@ -914,249 +779,177 @@
 
     function renderPlugAccess() {
       const access = getPlugAccess();
-
       const bar = el("plugAccessStatus");
       const onBtn = el("plugOnBtn");
       const offBtn = el("plugOffBtn");
 
       if (!bar || !onBtn || !offBtn) return;
 
-      if (access.allowed) {
+      const sumpPct = lastData ? Number(lastData.sumpPct || 0) : 0;
+
+      if (sumpPct >= PLUG_SUMP_SAFETY_PCT) {
+        bar.textContent = "Motor plug ON blocked: sump at/above 85% safety level";
+        bar.className = "status-bar disconnected";
+      } else if (access.allowed) {
         bar.textContent = "Motor plug access OPEN until " + formatAccessDate(access.end);
         bar.className = "status-bar connected";
-
-        onBtn.disabled = false;
-        offBtn.disabled = false;
       } else {
         bar.textContent = "Motor plug access CLOSED. Next access: " + formatAccessDate(access.next);
         bar.className = "status-bar disconnected";
-
-        onBtn.disabled = true;
-        offBtn.disabled = true;
-      }
-    }
-
-    // ============================================================
-    // QUBO PLUG FIREBASE ACTION LOG FOR TELEGRAM ADMIN ALERTS
-    // ============================================================
-    function logPlugAction(action) {
-      fbPatch({
-        plugAction: action,
-        plugActionBy: userName || "Guest",
-        plugActionTime: new Date().toLocaleString()
-      }).catch(() => {});
-    }
-
-    // ============================================================
-    // QUBO PLUG DIRECT EMQX
-    // ============================================================
-    function renderPlug() {
-      const mqttBar = el("plugMqttStatus");
-      if (mqttBar) {
-        mqttBar.textContent = plugConnected
-          ? "PLUG MQTT LINK ACTIVE"
-          : "PLUG MQTT LINK CONNECTING / RETRYING...";
-
-        mqttBar.className = "status-bar " + (plugConnected ? "connected" : "disconnected");
       }
 
-      const fresh = lastPlugMessage && (Date.now() - lastPlugMessage < 35000);
-      const online = plugLwtOnline || fresh;
-
-      setText(
-        "plugOnlineStatus",
-        online
-          ? "Plug online / data fresh"
-          : "Plug offline or no recent data"
-      );
-
-      setText("plugPowerState", plugState);
-
-      const stateNode = el("plugPowerState");
-      if (stateNode) {
-        if (plugState === "ON") {
-          stateNode.style.color = "#10b981";
-        } else if (plugState === "OFF") {
-          stateNode.style.color = "#ef4444";
-        } else {
-          stateNode.style.color = "#38bdf8";
-        }
-      }
-
-      setText(
-        "plugMetrics",
-        "Power: " + formatNumber(plugPower, 1) +
-        " W | Voltage: " + formatNumber(plugVoltage, 1) +
-        " V | Current: " + formatNumber(plugCurrent, 2) + " A"
-      );
-
-      setText(
-        "plugKwh",
-        "Today: " + formatNumber(plugToday, 3) +
-        " kWh | Total: " + formatNumber(plugTotal, 3) + " kWh"
-      );
-
-      setText(
-        "plugLast",
-        lastPlugMessage
-          ? "Last update: " + new Date(lastPlugMessage).toLocaleTimeString()
-          : "Last update: --"
-      );
-
-      renderPlugAccess();
-    }
-
-    function handlePlugMessage(topic, payload) {
-      lastPlugMessage = Date.now();
-
-      let text = "";
-
-      try {
-        text = new TextDecoder().decode(payload);
-      } catch (e) {
-        text = payload.toString();
-      }
-
-      text = text.trim();
-
-      if (topic.endsWith("/LWT")) {
-        plugLwtOnline = /online/i.test(text);
-        renderPlug();
-        return;
-      }
-
-      if (topic.endsWith("/POWER") && /^(ON|OFF)$/i.test(text)) {
-        plugState = text.toUpperCase();
-        renderPlug();
-        return;
-      }
-
-      try {
-        const d = JSON.parse(text);
-
-        const p = d.POWER || d.Power;
-        if (p && /^(ON|OFF)$/i.test(String(p))) {
-          plugState = String(p).toUpperCase();
-        }
-
-        const energy = d.ENERGY || d.StatusENERGY;
-
-        if (energy) {
-          if (typeof energy.Power !== "undefined") plugPower = energy.Power;
-          if (typeof energy.Voltage !== "undefined") plugVoltage = energy.Voltage;
-          if (typeof energy.Current !== "undefined") plugCurrent = energy.Current;
-          if (typeof energy.Today !== "undefined") plugToday = energy.Today;
-          if (typeof energy.Total !== "undefined") plugTotal = energy.Total;
-        }
-
-        renderPlug();
-      } catch (e) {}
-    }
-
-    function subscribePlugTopics() {
-      if (!plugClient || !plugClient.connected) return;
-
-      plugClient.subscribe(
-        [
-          "tele/" + PLUG_TOPIC + "/STATE",
-          "tele/" + PLUG_TOPIC + "/SENSOR",
-          "tele/" + PLUG_TOPIC + "/LWT",
-          "stat/" + PLUG_TOPIC + "/POWER",
-          "stat/" + PLUG_TOPIC + "/RESULT"
-        ],
-        { qos: 1 }
-      );
-
-      plugClient.publish("cmnd/" + PLUG_TOPIC + "/TelePeriod", "10", { qos: 1 });
-      plugClient.publish("cmnd/" + PLUG_TOPIC + "/POWER", "", { qos: 1 });
-    }
-
-    function connectPlug() {
-      if (typeof mqtt === "undefined") {
-        setText("plugMqttStatus", "MQTT LIBRARY FAILED TO LOAD");
-        const mqttBar = el("plugMqttStatus");
-        if (mqttBar) mqttBar.className = "status-bar disconnected";
-        return;
-      }
-
-      try {
-        plugClient = mqtt.connect(PLUG_MQTT_URL, {
-          username: PLUG_MQTT_USER,
-          password: PLUG_MQTT_PASS,
-          clientId: "waterhtml_" + Math.random().toString(16).slice(2),
-          clean: true,
-          reconnectPeriod: 5000,
-          connectTimeout: 10000,
-          protocolVersion: 4
-        });
-      } catch (e) {
-        console.error(e);
-        setText("plugMqttStatus", "MQTT CONNECTION FAILED");
-        const mqttBar = el("plugMqttStatus");
-        if (mqttBar) mqttBar.className = "status-bar disconnected";
-        return;
-      }
-
-      plugClient.on("connect", function () {
-        plugConnected = true;
-        renderPlug();
-        plugMsg("MQTT connected to EMQX.");
-        subscribePlugTopics();
-      });
-
-      plugClient.on("close", function () {
-        plugConnected = false;
-        renderPlug();
-      });
-
-      plugClient.on("error", function (err) {
-        console.error("MQTT error:", err);
-        plugMsg("MQTT error. Check WebSocket URL / EMQX port.");
-      });
-
-      plugClient.on("message", function (topic, payload) {
-        handlePlugMessage(topic, payload);
-      });
+      onBtn.disabled = !access.allowed || sumpPct >= PLUG_SUMP_SAFETY_PCT;
+      offBtn.disabled = false;
     }
 
     function plugOn() {
+      if (!lastData) {
+        plugMsg("No telemetry yet.");
+        return;
+      }
+
+      const sumpPct = Number(lastData.sumpPct || 0);
       const access = getPlugAccess();
 
+      if (sumpPct >= PLUG_SUMP_SAFETY_PCT) {
+        plugMsg("Blocked: sump is at/above 85% safety level.");
+        return;
+      }
+
       if (!access.allowed) {
-        plugMsg("Motor plug access is closed. Next access: " + formatAccessDate(access.next));
+        plugMsg("Blocked: outside plug access window.");
         return;
       }
 
-      if (!plugClient || !plugClient.connected) {
-        plugMsg("MQTT not connected yet.");
-        return;
-      }
-
-      plugClient.publish("cmnd/" + PLUG_TOPIC + "/POWER", "ON", { qos: 1 });
-      plugState = "ON";
-      renderPlug();
-      plugMsg("ON command sent to qubo_plug_3.");
-      logPlugAction(1);
+      fbPatch({
+        plugCommand: 1,
+        plugActionBy: userName || "Guest"
+      })
+      .then(() => plugMsg("ON command sent to ESP32."))
+      .catch(() => plugMsg("ON command failed."));
     }
 
     function plugOff() {
-      const access = getPlugAccess();
+      fbPatch({
+        plugCommand: 2,
+        plugActionBy: userName || "Guest"
+      })
+      .then(() => plugMsg("OFF command sent to ESP32."))
+      .catch(() => plugMsg("OFF command failed."));
+    }
 
-      if (!access.allowed) {
-        plugMsg("Motor plug access is closed. Next access: " + formatAccessDate(access.next));
-        return;
+    // ============================================================
+    // TELEMETRY REFRESH
+    // ============================================================
+    function setLowBadge(id, pct) {
+      const node = el(id);
+      if (!node) return;
+
+      if (pct >= 1 && pct < 10) {
+        node.classList.remove("hidden");
+      } else {
+        node.classList.add("hidden");
       }
+    }
 
-      if (!plugClient || !plugClient.connected) {
-        plugMsg("MQTT not connected yet.");
-        return;
+    async function refreshWater() {
+      try {
+        const res = await fetch(fbTelemetryUrl(), {
+          cache: "no-store"
+        });
+
+        if (!res.ok) throw new Error("HTTP " + res.status);
+
+        const d = await res.json();
+        if (!d) throw new Error("Empty telemetry");
+
+        lastData = d;
+
+        const nowSec = Math.floor(Date.now() / 1000);
+        const lastSeen = Number(d.lastSeenEpoch || 0);
+        const age = lastSeen ? (nowSec - lastSeen) : 99999;
+        const alive = age < 30;
+
+        const statusBar = el("waterStatus");
+        if (statusBar) {
+          statusBar.textContent = alive
+            ? "Live telemetry · Updated: " + new Date(lastSeen * 1000).toLocaleTimeString()
+            : "Connecting… / ESP32 offline";
+
+          statusBar.className = "status-bar " + (alive ? "connected" : "disconnected");
+        }
+
+        const hitachiPct = Number(d.hitachiPct || 0);
+        const kaveriPct = Number(d.kaveriPct || 0);
+        const sumpPct = Number(d.sumpPct || 0);
+
+        setText("hitachiPct", hitachiPct + "%");
+        setText("hitachiLitres", "Level: " + Number(d.hitachiLitres || 0) + " L");
+
+        setText("kaveriPct", kaveriPct + "%");
+        setText("kaveriLitres", "Level: " + Number(d.kaveriLitres || 0) + " L");
+
+        setText("sumpPct", sumpPct + "%");
+        setText("sumpLitres", "Level: " + Number(d.sumpLitres || 0) + " L");
+
+        setLowBadge("hitachiLow", hitachiPct);
+        setLowBadge("kaveriLow", kaveriPct);
+        setLowBadge("sumpLow", sumpPct);
+
+        setText("rawValue", Number(d.sumpRaw || 0));
+        setText("savedCal", "Dry: " + Number(d.calDry || 0) + " | Full: " + Number(d.calWet || 0));
+
+        setText("corpStart", d.corpWaterStart || "Waiting for rise...");
+        setText("corpActive", Number(d.corpInflowActive) === 1 ? "ACTIVE INFLOW" : "Stable");
+
+        setText("dailyDraw", Number(d.dailyConsumption || 0) + " L");
+        setText("monthlyDraw", Number(d.monthlyConsumption || 0) + " L");
+        setText("monthlySince", "Since " + (d.monthlyResetDate || "--"));
+
+        // Plug UI
+        const plugState = Number(d.plugState || 0);
+
+        setText("plugPowerState", plugState === 1 ? "ON" : "OFF");
+
+        setText(
+          "plugMetrics",
+          "Power: " + formatNumber(d.plugPowerW, 1) +
+          " W | Voltage: " + formatNumber(d.plugVoltage, 1) +
+          " V | Current: " + formatNumber(d.plugCurrent, 2) + " A"
+        );
+
+        setText(
+          "plugKwh",
+          "Today: " + formatNumber(d.plugTodayKwh, 3) +
+          " kWh | Total: " + formatNumber(d.plugTotalKwh, 3) + " kWh"
+        );
+
+        setText(
+          "plugOnlineStatus",
+          "Plug state from ESP32: " + (plugState === 1 ? "ON" : "OFF")
+        );
+
+        const banner = el("fillBanner");
+        if (banner) {
+          if (Number(d.fillingMode) === 1) {
+            banner.style.display = "block";
+            banner.textContent = "MOTOR STARTED: HITACHI MOTOR ON";
+          } else if (Number(d.fillingMode) === 2) {
+            banner.style.display = "block";
+            banner.textContent = "MOTOR STARTED: KAVERI MOTOR ON";
+          } else {
+            banner.style.display = "none";
+          }
+        }
+
+        renderPlugAccess();
+      } catch (e) {
+        const statusBar = el("waterStatus");
+        if (statusBar) {
+          statusBar.textContent = "Connecting… / failed to read Firebase";
+          statusBar.className = "status-bar disconnected";
+        }
       }
-
-      plugClient.publish("cmnd/" + PLUG_TOPIC + "/POWER", "OFF", { qos: 1 });
-      plugState = "OFF";
-      renderPlug();
-      plugMsg("OFF command sent to qubo_plug_3.");
-      logPlugAction(2);
     }
 
     // ============================================================
